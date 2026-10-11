@@ -1,0 +1,197 @@
+:root {
+    --fondo: #0d0617;
+    --morado: #6b3fa0;
+    --texto: #f3e9ff;
+    --texto-suave: #cdbfe6;
+    --acento: #ff5fd2;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Space Grotesk', sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+}
+
+a { text-decoration: none; }
+
+a:focus-visible {
+    outline: 3px solid var(--acento);
+    outline-offset: 3px;
+}
+
+/* ---------- Header ---------- */
+body header {
+    height: 60px;
+    width: 100%;
+    background: linear-gradient(to right, #240433, #20064b);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-right: 48px;
+}
+
+body header img {
+    height: 100%;
+    padding: 10px;
+}
+
+header .logo {
+    height: 100%;
+    display: block;
+}
+
+/* ---------- Main ---------- */
+main {
+    position: relative;
+    width: 100%;
+    min-height: calc(100vh - 60px);
+    background-image: url("https://i.postimg.cc/htg0ZxmJ/descarga.jpg");
+    background-size: cover;
+    background-position: center;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+main .overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(13, 6, 23, 0.72);
+    backdrop-filter: blur(8px);
+    box-shadow:
+        inset 0 0 50px rgba(190, 80, 255, 0.25),
+        inset 0 0 100px rgba(255, 100, 200, 0.15);
+    pointer-events: none;
+    z-index: 1;
+}
+
+.hero {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 1600px;
+    padding: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 48px;
+}
+
+/* ---------- Texto ---------- */
+.hero-text {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    left: 0;
+    position: absolute;
+}
+
+.saludo {
+    font-size: 18px;
+    color: var(--texto-suave);
+}
+
+.hero-text h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-weight: 400;
+    font-size: clamp(24px, 3.4vw, 44px);
+    line-height: 1.3;
+    color: var(--acento);
+}
+
+.cursor {
+    display: inline-block;
+    width: 0.3em;
+    height: 1em;
+    margin-left: 8px;
+    background: var(--acento);
+    vertical-align: -0.1em;
+    animation: parpadeo 1s steps(2) infinite;
+}
+
+@keyframes parpadeo { 50% { opacity: 0; } }
+
+.apellido {
+    font-size: 22px;
+    font-weight: 500;
+    color: var(--texto-suave);
+}
+
+.frase {
+    font-size: 20px;
+    line-height: 1.5;
+    max-width: 480px;
+}
+
+.etiquetas {
+    list-style: none;
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    max-width: 600px;
+}
+
+.etiquetas li {
+    padding: 8px 14px;
+    border: 1px solid var(--morado);
+    color: #d9c8f5;
+    font-size: 14px;
+}
+
+/* ---------- Botones ---------- */
+.acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    margin-top: 8px;
+}
+
+.btn {
+    display: inline-block;
+    padding: 15px 28px;
+    font-size: 16px;
+    transition: background .2s, color .2s, border-color .2s;
+}
+
+.btn-principal {
+    background: var(--acento);
+    color: #1a0630;
+    font-weight: 700;
+    border: 2px solid var(--acento);
+}
+
+.btn-principal:hover { background: #ff86e0; border-color: #ff86e0; }
+
+.btn-secundario {
+    border: 2px solid var(--morado);
+    color: var(--texto);
+    font-weight: 500;
+}
+
+.btn-secundario:hover { border-color: var(--acento); color: var(--acento); }
+
+/* ---------- Gato ---------- */
+main img.hero-gato {
+    filter: drop-shadow(0 0 40px rgba(138, 63, 252, 0.55));
+    position: absolute;
+    z-index: -1;
+}
+
+/* ---------- Móvil ---------- */
+@media (max-width: 800px) {
+    body header { padding-right: 20px; }
+    header nav { gap: 18px; font-size: 14px; }
+    .hero { flex-direction: column; padding: 32px 24px 48px; }
+    main img.hero-gato { max-width: 320px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .cursor { animation: none; }
+}
