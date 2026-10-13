@@ -20,20 +20,86 @@
     <section class="hero">
       <div class="hero-text">
         <p class="saludo">&gt; Hola, soy</p>
-        <h1>Julian </h1>
-        <h1>Carvajalino <span class="cursor" aria-hidden="true"></span></h1>
+        <h1>Julian</h1>
+        <h1>Carvajalino<span class="cursor" aria-hidden="true"></span></h1>
         <p class="frase">Creo experiencias web interactivas con 3D y datos.</p>
 
         <ul class="etiquetas">
           <li>Desarrollador Web Junior</li>
           <li>Interfaces 3D</li>
           <li>Interfaces Creativas</li>
-          <li>Automatizacion de Analisis</li>
+          <li>Automatización de Análisis</li>
         </ul>
       </div>
 
       <img class="hero-gato" src="https://i.postimg.cc/gk1Cxg14/descarga-Photoroom.png" alt="Gato pixel art frente a un escritorio gamer">
+
+      <!-- Botones de la derecha: cada uno abre un panel -->
+      <nav class="menu" aria-label="Secciones del portafolio">
+        <button type="button" class="menu-btn" data-panel="sobre-mi" aria-haspopup="dialog">Sobre mí</button>
+        <button type="button" class="menu-btn" data-panel="experiencia" aria-haspopup="dialog">Experiencia</button>
+        <button type="button" class="menu-btn" data-panel="proyectos" aria-haspopup="dialog">Proyectos</button>
+        <button type="button" class="menu-btn" data-panel="contacto" aria-haspopup="dialog">Contacto</button>
+      </nav>
     </section>
+
+    <!-- ========== PANELES (se abren por encima) ========== -->
+    <div class="panel" id="sobre-mi" role="dialog" aria-modal="true" aria-labelledby="t-sobre-mi" hidden>
+      <div class="panel-card">
+        <button type="button" class="panel-cerrar" aria-label="Cerrar">&times;</button>
+        <h2 id="t-sobre-mi">Sobre mí</h2>
+        <p>Soy desarrollador web junior y me gusta construir interfaces que se sienten vivas: 3D, animación y detalles creativos.</p>
+        <p>También trabajo con datos y automatizo análisis para que la información se entienda más rápido.</p>
+        <p>[Agrega aquí de dónde eres, qué estudiaste y qué estás buscando ahora.]</p>
+      </div>
+    </div>
+
+    <div class="panel" id="experiencia" role="dialog" aria-modal="true" aria-labelledby="t-experiencia" hidden>
+      <div class="panel-card">
+        <button type="button" class="panel-cerrar" aria-label="Cerrar">&times;</button>
+        <h2 id="t-experiencia">Experiencia</h2>
+        <ul class="linea">
+          <li>
+            <span class="fecha">[Año – Año]</span>
+            <h3>[Cargo]</h3>
+            <p>[Empresa o proyecto] · [Qué hiciste y qué lograste.]</p>
+          </li>
+          <li>
+            <span class="fecha">[Año – Año]</span>
+            <h3>[Cargo]</h3>
+            <p>[Empresa o proyecto] · [Qué hiciste y qué lograste.]</p>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="panel" id="proyectos" role="dialog" aria-modal="true" aria-labelledby="t-proyectos" hidden>
+      <div class="panel-card">
+        <button type="button" class="panel-cerrar" aria-label="Cerrar">&times;</button>
+        <h2 id="t-proyectos">Proyectos</h2>
+        <div class="rejilla">
+          <a href="#" class="proyecto"><h3>[Proyecto 1]</h3><p>[Una línea de qué es y con qué lo hiciste.]</p></a>
+          <a href="#" class="proyecto"><h3>[Proyecto 2]</h3><p>[Una línea de qué es y con qué lo hiciste.]</p></a>
+          <a href="#" class="proyecto"><h3>[Proyecto 3]</h3><p>[Una línea de qué es y con qué lo hiciste.]</p></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="contacto" role="dialog" aria-modal="true" aria-labelledby="t-contacto" hidden>
+      <div class="panel-card">
+        <button type="button" class="panel-cerrar" aria-label="Cerrar">&times;</button>
+        <h2 id="t-contacto">Contacto</h2>
+        <p>¿Tienes una idea o una oportunidad? Escríbeme.</p>
+        <ul class="enlaces">
+          <li><a href="mailto:tucorreo@ejemplo.com">tucorreo@ejemplo.com</a></li>
+          <li><a href="#">GitHub</a></li>
+          <li><a href="#">LinkedIn</a></li>
+        </ul>
+        <a href="#" class="btn btn-principal">Descargar CV</a>
+      </div>
+    </div>
   </main>
+
+  <script src="index.js"></script>
 </body>
 </html>

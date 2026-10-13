@@ -4,12 +4,18 @@
     --texto: #f3e9ff;
     --texto-suave: #cdbfe6;
     --acento: #ff5fd2;
+    --alto-header: 60px;
 }
 
 * {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+}
+
+html, body {
+    height: 100%;
+    overflow: hidden; /* una sola pantalla, sin scroll */
 }
 
 body {
@@ -20,20 +26,19 @@ body {
 
 a { text-decoration: none; }
 
-a:focus-visible {
+a:focus-visible,
+button:focus-visible {
     outline: 3px solid var(--acento);
     outline-offset: 3px;
 }
 
 /* ---------- Header ---------- */
 body header {
-    height: 60px;
+    height: var(--alto-header);
     width: 100%;
     background: linear-gradient(to right, #240433, #20064b);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding-right: 48px;
 }
 
 body header img {
@@ -50,14 +55,12 @@ header .logo {
 main {
     position: relative;
     width: 100%;
-    min-height: calc(100vh - 60px);
+    height: calc(100vh - var(--alto-header));
+    height: calc(100dvh - var(--alto-header));
     background-image: url("https://i.postimg.cc/htg0ZxmJ/descarga.jpg");
     background-size: cover;
     background-position: center;
     overflow: hidden;
-    display: flex;
-    justify-content: center;
-    align-items: center;
 }
 
 main .overlay {
@@ -72,25 +75,27 @@ main .overlay {
     z-index: 1;
 }
 
+/* Tres zonas en columnas: texto | gato | botones.
+   Cada una tiene su propio espacio, nunca se pisan. */
 .hero {
-    position: relative;
+    position: absolute;
+    inset: 0;
     z-index: 2;
-    width: 100%;
-    max-width: 1600px;
-    padding: 48px;
-    display: flex;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 columnas iguales: el gato queda en el centro exacto */
+    grid-template-rows: minmax(0, 1fr);
     align-items: center;
-    justify-content: center;
-    gap: 48px;
+    column-gap: 40px;
+    padding: 24px 48px;
 }
 
-/* ---------- Texto ---------- */
+/* ---------- Texto (izquierda) ---------- */
 .hero-text {
+    container-type: inline-size; /* el título se ajusta al ancho de esta columna */
     display: flex;
     flex-direction: column;
     gap: 22px;
-    left: 0;
-    position: absolute;
+    min-width: 0;
 }
 
 .saludo {
@@ -101,7 +106,7 @@ main .overlay {
 .hero-text h1 {
     font-family: 'Press Start 2P', monospace;
     font-weight: 400;
-    font-size: clamp(24px, 3.4vw, 44px);
+    font-size: clamp(14px, 8.5cqi, 44px); /* "Carvajalino" = 11 letras */
     line-height: 1.3;
     color: var(--acento);
 }
@@ -117,12 +122,6 @@ main .overlay {
 }
 
 @keyframes parpadeo { 50% { opacity: 0; } }
-
-.apellido {
-    font-size: 22px;
-    font-weight: 500;
-    color: var(--texto-suave);
-}
 
 .frase {
     font-size: 20px;
@@ -145,19 +144,152 @@ main .overlay {
     font-size: 14px;
 }
 
-/* ---------- Botones ---------- */
-.acciones {
+/* ---------- Gato (centro) ---------- */
+.hero-gato-caja {
+    align-self: stretch;
+    min-height: 0;
+    min-width: 0;
     display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    margin-top: 8px;
+    align-items: center;
+    justify-content: center;
 }
 
+main img.hero-gato {
+    filter: drop-shadow(0 0 40px rgba(138, 63, 252, 0.55));
+    max-width: 100%;
+    max-height: 85%;
+    object-fit: contain;
+}
+
+/* ---------- Botones de la derecha ---------- */
+.menu {
+    justify-self: end;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.menu-btn {
+    font: 500 16px 'Space Grotesk', sans-serif;
+    min-width: 150px;
+    padding: 14px 20px;
+    text-align: left;
+    color: var(--texto);
+    background: rgba(26, 6, 48, 0.75);
+    border: 2px solid var(--morado);
+    cursor: pointer;
+    transition: border-color .2s, color .2s, background .2s, transform .2s;
+}
+
+.menu-btn:hover {
+    border-color: var(--acento);
+    color: var(--acento);
+    background: rgba(255, 95, 210, 0.1);
+    transform: translateX(-4px);
+}
+
+/* ---------- Paneles por encima ---------- */
+.panel {
+    position: absolute;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 32px;
+    background: rgba(8, 3, 16, 0.78);
+    backdrop-filter: blur(6px);
+    animation: aparece .25s ease-out;
+}
+
+.panel[hidden] { display: none; }
+
+.panel-card {
+    position: relative;
+    width: 100%;
+    max-width: 720px;
+    max-height: 100%;
+    overflow-y: auto; /* si el contenido es largo, se desplaza dentro del panel */
+    padding: 40px;
+    background: #1a0b2e;
+    border: 2px solid var(--morado);
+    box-shadow: 0 0 60px rgba(138, 63, 252, 0.35);
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    animation: sube .3s ease-out;
+}
+
+@keyframes aparece { from { opacity: 0; } }
+@keyframes sube { from { transform: translateY(24px); opacity: 0; } }
+
+.panel-card h2 {
+    font-family: 'Press Start 2P', monospace;
+    font-weight: 400;
+    font-size: clamp(18px, 2.4vw, 26px);
+    line-height: 1.4;
+    color: var(--acento);
+    padding-right: 40px;
+}
+
+.panel-card p {
+    font-size: 18px;
+    line-height: 1.6;
+    color: var(--texto);
+    max-width: 62ch;
+}
+
+.panel-cerrar {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 44px;
+    height: 44px;
+    font-size: 28px;
+    line-height: 1;
+    color: var(--texto-suave);
+    background: none;
+    border: 2px solid var(--morado);
+    cursor: pointer;
+    transition: color .2s, border-color .2s;
+}
+
+.panel-cerrar:hover { color: var(--acento); border-color: var(--acento); }
+
+/* Experiencia */
+.linea { list-style: none; display: flex; flex-direction: column; gap: 22px; }
+.linea li { padding-left: 18px; border-left: 3px solid var(--morado); }
+.fecha { font-size: 14px; color: var(--texto-suave); }
+.linea h3, .proyecto h3 { font-size: 20px; color: var(--texto); margin: 4px 0; }
+.linea p { font-size: 16px; }
+
+/* Proyectos */
+.rejilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    gap: 16px;
+}
+
+.proyecto {
+    display: block;
+    padding: 20px;
+    border: 2px solid var(--morado);
+    transition: border-color .2s, background .2s;
+}
+
+.proyecto:hover { border-color: var(--acento); background: rgba(255, 95, 210, 0.08); }
+.proyecto p { font-size: 15px; color: var(--texto-suave); }
+
+/* Contacto */
+.enlaces { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.enlaces a { font-size: 18px; color: var(--texto-suave); border-bottom: 1px solid var(--morado); }
+.enlaces a:hover { color: var(--acento); border-color: var(--acento); }
+
 .btn {
+    align-self: flex-start;
     display: inline-block;
     padding: 15px 28px;
     font-size: 16px;
-    transition: background .2s, color .2s, border-color .2s;
 }
 
 .btn-principal {
@@ -165,33 +297,53 @@ main .overlay {
     color: #1a0630;
     font-weight: 700;
     border: 2px solid var(--acento);
+    transition: background .2s;
 }
 
-.btn-principal:hover { background: #ff86e0; border-color: #ff86e0; }
+.btn-principal:hover { background: #ff86e0; }
 
-.btn-secundario {
-    border: 2px solid var(--morado);
-    color: var(--texto);
-    font-weight: 500;
+/* ---------- Tablet: texto y gato arriba, botones en una fila abajo ---------- */
+@media (max-width: 1100px) {
+    .hero {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+        grid-template-rows: minmax(0, 1fr) auto;
+        column-gap: 24px;
+        row-gap: 20px;
+        padding: 24px 32px;
+    }
+    .menu {
+        grid-column: 1 / -1;
+        justify-self: stretch;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+    .menu-btn { flex: 1 1 140px; min-width: 0; text-align: center; }
+    .menu-btn:hover { transform: none; }
 }
 
-.btn-secundario:hover { border-color: var(--acento); color: var(--acento); }
+/* ---------- Móvil: todo en una columna (texto, gato, botones) ---------- */
+@media (max-width: 700px) {
+    .hero {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr) auto;
+        padding: 20px 20px 16px;
+        row-gap: 14px;
+        align-items: start;
+    }
+    .hero-text { gap: 12px; }
+    .saludo { font-size: 15px; }
+    .frase { font-size: 16px; }
+    .etiquetas { gap: 6px; }
+    .etiquetas li { font-size: 12px; padding: 5px 8px; }
+    .hero-gato-caja { align-self: stretch; }
+    .menu-btn { flex: 1 1 40%; padding: 12px; }
 
-/* ---------- Gato ---------- */
-main img.hero-gato {
-    filter: drop-shadow(0 0 40px rgba(138, 63, 252, 0.55));
-    position: absolute;
-    z-index: -1;
-}
-
-/* ---------- Móvil ---------- */
-@media (max-width: 800px) {
-    body header { padding-right: 20px; }
-    header nav { gap: 18px; font-size: 14px; }
-    .hero { flex-direction: column; padding: 32px 24px 48px; }
-    main img.hero-gato { max-width: 320px; }
+    .panel { padding: 16px; }
+    .panel-card { padding: 28px 22px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .cursor { animation: none; }
+    .cursor, .panel, .panel-card { animation: none; }
+    .menu-btn { transition: none; }
 }
