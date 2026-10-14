@@ -17,6 +17,9 @@
   <main>
     <div class="overlay"></div>
 
+    <!-- Escena 3D a pantalla completa (fondo). Se dibuja con escena.js -->
+    <div id="escena-3d" class="hero-gato-caja" role="img" aria-label="Escena 3D de bloques: gata gamer frente a un escritorio. Haz clic en las ventanas flotantes para abrir cada sección."></div>
+
     <section class="hero">
       <div class="hero-text">
         <p class="saludo">&gt; Hola, soy</p>
@@ -32,16 +35,19 @@
         </ul>
       </div>
 
-      <img class="hero-gato" src="https://i.postimg.cc/gk1Cxg14/descarga-Photoroom.png" alt="Gato pixel art frente a un escritorio gamer">
 
-      <!-- Botones de la derecha: cada uno abre un panel -->
-      <nav class="menu" aria-label="Secciones del portafolio">
-        <button type="button" class="menu-btn" data-panel="sobre-mi" aria-haspopup="dialog">Sobre mí</button>
-        <button type="button" class="menu-btn" data-panel="experiencia" aria-haspopup="dialog">Experiencia</button>
-        <button type="button" class="menu-btn" data-panel="proyectos" aria-haspopup="dialog">Proyectos</button>
-        <button type="button" class="menu-btn" data-panel="contacto" aria-haspopup="dialog">Contacto</button>
-      </nav>
     </section>
+
+    <!-- Acceso por teclado / lector de pantalla (oculto a la vista; se muestra al enfocar con Tab).
+         Con el mouse se abren haciendo clic en las ventanas flotantes del 3D. -->
+    <nav class="menu" aria-label="Secciones del portafolio">
+      <button type="button" class="menu-btn" data-panel="sobre-mi" aria-haspopup="dialog">Sobre mí</button>
+      <button type="button" class="menu-btn" data-panel="experiencia" aria-haspopup="dialog">Experiencia</button>
+      <button type="button" class="menu-btn" data-panel="proyectos" aria-haspopup="dialog">Proyectos</button>
+      <button type="button" class="menu-btn" data-panel="contacto" aria-haspopup="dialog">Contacto</button>
+    </nav>
+
+    <p class="pista" aria-hidden="true">Arrastra para rotar · haz clic en las ventanas flotantes</p>
 
     <!-- ========== PANELES (se abren por encima) ========== -->
     <div class="panel" id="sobre-mi" role="dialog" aria-modal="true" aria-labelledby="t-sobre-mi" hidden>
@@ -100,6 +106,9 @@
     </div>
   </main>
 
+  <!-- Three.js r128 (cdnjs), luego la escena, luego tu index.js de siempre -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="escena.js"></script>
   <script src="index.js"></script>
 </body>
 </html>

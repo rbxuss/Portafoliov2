@@ -57,7 +57,6 @@ main {
     width: 100%;
     height: calc(100vh - var(--alto-header));
     height: calc(100dvh - var(--alto-header));
-    background-image: url("https://i.postimg.cc/htg0ZxmJ/descarga.jpg");
     background-size: cover;
     background-position: center;
     overflow: hidden;
@@ -75,28 +74,29 @@ main .overlay {
     z-index: 1;
 }
 
-/* Tres zonas en columnas: texto | gato | botones.
-   Cada una tiene su propio espacio, nunca se pisan. */
+/* Capas: fondo (1) < escena 3D (2) < texto (3) < paneles (10).
+   El texto no bloquea el mouse, así que se puede arrastrar/clicar el 3D por debajo. */
 .hero {
     position: absolute;
     inset: 0;
-    z-index: 2;
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr)); /* 3 columnas iguales: el gato queda en el centro exacto */
-    grid-template-rows: minmax(0, 1fr);
+    z-index: 3;
+    display: flex;
     align-items: center;
-    column-gap: 40px;
     padding: 24px 48px;
+    pointer-events: none;
 }
 
 /* ---------- Texto (izquierda) ---------- */
 .hero-text {
+    width: min(34vw, 520px);
     container-type: inline-size; /* el título se ajusta al ancho de esta columna */
     display: flex;
     flex-direction: column;
     gap: 22px;
     min-width: 0;
 }
+
+.hero-text { text-shadow: 0 2px 14px rgba(13, 6, 23, .95); }
 
 .saludo {
     font-size: 18px;
@@ -141,52 +141,85 @@ main .overlay {
     padding: 8px 14px;
     border: 1px solid var(--morado);
     color: #d9c8f5;
+    background: rgba(13, 6, 23, .55);
     font-size: 14px;
 }
 
-/* ---------- Gato (centro) ---------- */
+/* ---------- Escena 3D (pantalla completa) ---------- */
 .hero-gato-caja {
-    align-self: stretch;
-    min-height: 0;
-    min-width: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    position: absolute;
+    inset: 0;
+    z-index: 2;
 }
 
-main img.hero-gato {
-    filter: drop-shadow(0 0 40px rgba(138, 63, 252, 0.55));
-    max-width: 100%;
-    max-height: 85%;
-    object-fit: contain;
+.hero-gato-caja canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
 }
 
-/* ---------- Botones de la derecha ---------- */
+/* Etiqueta que sigue al mouse al pasar sobre una ventana */
+.etiqueta-3d {
+    position: absolute;
+    z-index: 4;
+    transform: translate(14px, -38px);
+    padding: 7px 10px;
+    font: 400 10px 'Press Start 2P', monospace;
+    color: var(--acento);
+    background: rgba(26, 6, 48, .92);
+    border: 2px solid var(--acento);
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+.pista {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 14px;
+    z-index: 3;
+    text-align: center;
+    font-size: 13px;
+    color: var(--texto-suave);
+    text-shadow: 0 1px 8px rgba(13, 6, 23, .95);
+    pointer-events: none;
+}
+
+/* Botones solo para teclado / lector de pantalla: ocultos hasta recibir foco */
 .menu {
-    justify-self: end;
+    position: absolute;
+    left: 50%;
+    bottom: 48px;
+    transform: translateX(-50%);
+    z-index: 5;
     display: flex;
-    flex-direction: column;
-    gap: 14px;
+    gap: 10px;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+}
+
+.menu:focus-within {
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip-path: none;
 }
 
 .menu-btn {
-    font: 500 16px 'Space Grotesk', sans-serif;
-    min-width: 150px;
-    padding: 14px 20px;
-    text-align: left;
+    font: 500 15px 'Space Grotesk', sans-serif;
+    padding: 12px 18px;
     color: var(--texto);
-    background: rgba(26, 6, 48, 0.75);
+    background: rgba(26, 6, 48, 0.9);
     border: 2px solid var(--morado);
     cursor: pointer;
-    transition: border-color .2s, color .2s, background .2s, transform .2s;
 }
 
-.menu-btn:hover {
-    border-color: var(--acento);
-    color: var(--acento);
-    background: rgba(255, 95, 210, 0.1);
-    transform: translateX(-4px);
-}
+.menu-btn:hover { border-color: var(--acento); color: var(--acento); }
 
 /* ---------- Paneles por encima ---------- */
 .panel {
@@ -302,42 +335,21 @@ main img.hero-gato {
 
 .btn-principal:hover { background: #ff86e0; }
 
-/* ---------- Tablet: texto y gato arriba, botones en una fila abajo ---------- */
+/* ---------- Tablet ---------- */
 @media (max-width: 1100px) {
-    .hero {
-        grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
-        grid-template-rows: minmax(0, 1fr) auto;
-        column-gap: 24px;
-        row-gap: 20px;
-        padding: 24px 32px;
-    }
-    .menu {
-        grid-column: 1 / -1;
-        justify-self: stretch;
-        flex-direction: row;
-        flex-wrap: wrap;
-        gap: 12px;
-    }
-    .menu-btn { flex: 1 1 140px; min-width: 0; text-align: center; }
-    .menu-btn:hover { transform: none; }
+    .hero { padding: 24px 32px; }
+    .hero-text { width: min(44vw, 460px); }
 }
 
-/* ---------- Móvil: todo en una columna (texto, gato, botones) ---------- */
+/* ---------- Móvil: el texto va arriba y la escena queda detrás, más abajo ---------- */
 @media (max-width: 700px) {
-    .hero {
-        grid-template-columns: minmax(0, 1fr);
-        grid-template-rows: auto minmax(0, 1fr) auto;
-        padding: 20px 20px 16px;
-        row-gap: 14px;
-        align-items: start;
-    }
-    .hero-text { gap: 12px; }
+    .hero { align-items: flex-start; padding: 20px 20px 16px; }
+    .hero-text { width: 100%; gap: 12px; }
     .saludo { font-size: 15px; }
     .frase { font-size: 16px; }
     .etiquetas { gap: 6px; }
     .etiquetas li { font-size: 12px; padding: 5px 8px; }
-    .hero-gato-caja { align-self: stretch; }
-    .menu-btn { flex: 1 1 40%; padding: 12px; }
+    .pista { font-size: 12px; bottom: 10px; }
 
     .panel { padding: 16px; }
     .panel-card { padding: 28px 22px; }
