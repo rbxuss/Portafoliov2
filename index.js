@@ -1,7 +1,4 @@
-/* =========================================================
-   Escena 3D voxel (Three.js r128) para el hero del portafolio
-   Se dibuja dentro de <div id="escena-3d" class="hero-gato-caja">
-   ========================================================= */
+
 (function () {
   const caja = document.getElementById('escena-3d');
   if (!caja || !window.THREE) return;
@@ -33,6 +30,9 @@
   scene.add(sun);
   const screenLight = new THREE.PointLight(0xff9ad0, 1.2, 30);
   screenLight.position.set(0, 7.5, -3); scene.add(screenLight);
+  // luz de contorno cian: separa a la gata del fondo
+  const rim = new THREE.PointLight(0x3ff0ff, 0.9, 20);
+  rim.position.set(-6, 10, 9); scene.add(rim);
 
   // ===== ESCRITORIO =====
   const desk = mkGroup();
@@ -90,29 +90,134 @@
   addBlock(2.4, 4.2, CZ + 0.3, 0.6, 0.5, 2.4, 0x3a2a5a, chair);
 
   // ===== GATA =====
-  const cat = mkGroup(); const PINK = 0xf5a0d0, EAR = 0xff8ac8, PURP = 0x7a3a9a;
-  addBlock(0, 4.7, CZ - 0.2, 3.2, 3.2, 2.2, PINK, cat);
-  addBlock(0, 3.2, CZ - 0.2, 3.6, 0.8, 2.6, PINK, cat);
-  addBlock(0, 8.0, CZ - 0.5, 3.2, 2.4, 2.4, PINK, cat);
-  addBlock(-1.75, 7.8, CZ - 0.5, 0.5, 1.4, 2.0, EAR, cat);
-  addBlock(1.75, 7.8, CZ - 0.5, 0.5, 1.4, 2.0, EAR, cat);
-  [-1, 1].forEach(s => {
-    addBlock(s * 1.0, 9.45, CZ - 0.5, 1.0, 0.7, 0.9, EAR, cat);
-    addBlock(s * 1.0, 10.0, CZ - 0.5, 0.7, 0.5, 0.8, EAR, cat);
-    addBlock(s * 1.0, 10.4, CZ - 0.5, 0.4, 0.4, 0.7, EAR, cat);
-    addBlock(s * 1.0, 9.5, CZ - 0.95, 0.5, 0.5, 0.1, PURP, cat);
-    addBlock(s * 1.0, 10.0, CZ - 0.9, 0.3, 0.3, 0.1, PURP, cat);
-    addBlock(s * 1.5, 5.55, CZ - 1.6, 0.8, 0.8, 2.9, PINK, cat);
-    addBlock(s * 0.9, 5.15, CZ - 3.4, 0.9, 0.5, 0.9, EAR, cat);
+  const cat = mkGroup();
+  const C = {
+    fur: 0xf5a0d0, furLight: 0xffd6ee, furDark: 0xd070b0, ear: 0xff8ac8, tip: 0x7a3a9a,
+    hood: 0x8a52d6, hoodDark: 0x6a3aa8, dark: 0x2a1a4a, ink: 0x1a0b2e, cyan: 0x3ff0ff
+  };
+  const S = [-1, 1];
+
+  // --- Piernas (sentada, colgando del asiento) ---
+  S.forEach(s => {
+    addBlock(s * 1.0, 3.55, CZ - 0.5, 1.2, 1.0, 2.3, C.fur, cat);       // muslo
+    addBlock(s * 1.0, 2.2, CZ - 1.7, 1.0, 2.0, 1.0, C.fur, cat);        // pantorrilla
+    addBlock(s * 1.0, 1.25, CZ - 1.9, 1.0, 0.4, 1.5, C.furLight, cat);  // pie
   });
-  const tail = new THREE.Group(); tail.position.set(1.0, 3.4, CZ + 2.3); scene.add(tail);
+
+  // --- Torso con sudadera ---
+  addBlock(0, 4.3, CZ - 0.2, 3.2, 2.5, 2.4, C.hood, cat);               // torso
+  addBlock(0, 3.25, CZ - 0.2, 3.3, 0.35, 2.5, C.hoodDark, cat);         // dobladillo
+  addBlock(0, 6.2, CZ - 0.4, 4.4, 1.4, 2.2, C.hood, cat);               // hombros
+  addBlock(0, 4.1, CZ - 1.45, 2.2, 1.0, 0.1, C.hoodDark, cat);          // bolsillo
+  S.forEach(s => addBlock(s * 0.5, 5.0, CZ - 1.45, 0.15, 1.1, 0.1, C.ear, cat)); // cordones
+  addBlock(0, 7.1, CZ - 0.5, 2.2, 0.6, 2.0, C.fur, cat);                // cuello
+
+  // --- Capucha caída hacia atrás ---
+  addBlock(0, 7.1, CZ + 0.65, 3.4, 1.3, 1.1, C.hoodDark, cat);
+  S.forEach(s => addBlock(s * 1.8, 6.95, CZ + 0.15, 0.7, 1.0, 1.7, C.hoodDark, cat));
+
+  // --- Brazos tecleando ---
+  const paws = [];
+  S.forEach(s => {
+    addBlock(s * 2.2, 5.7, CZ - 1.2, 1.0, 1.0, 2.4, C.hood, cat);       // brazo
+    addBlock(s * 1.7, 5.5, CZ - 2.6, 0.9, 0.8, 2.2, C.hood, cat);       // antebrazo
+    addBlock(s * 1.55, 5.5, CZ - 3.7, 0.95, 0.9, 0.25, C.ear, cat);     // puño de la manga
+    const paw = new THREE.Group(); paw.position.set(s * 1.55, 5.3, CZ - 4.0); cat.add(paw);
+    paw.userData = { y0: 5.3, ph: s > 0 ? 0 : 1.7 };
+    addBlock(0, 0, 0, 1.0, 0.55, 1.1, C.fur, paw);
+    [-0.22, 0.22].forEach(x => addBlock(x, 0, -0.57, 0.06, 0.35, 0.05, C.furDark, paw, true)); // deditos
+    paws.push(paw);
+  });
+
+  // --- Cabeza (grupo con pivote en el cuello) ---
+  const head = new THREE.Group(); head.position.set(0, 7.2, CZ - 0.5); cat.add(head);
+  const H = (x, y, z, w, h, d, c, basic) => addBlock(x, y, z, w, h, d, c, head, basic);
+
+  H(0, 1.3, 0, 3.6, 2.6, 2.6, C.fur);                    // cráneo
+  H(0, 0.75, -1.4, 1.5, 0.8, 0.3, C.furLight);           // hocico
+  H(0, 0.95, -1.6, 0.4, 0.25, 0.15, 0xff5fa8);           // nariz
+  H(0, 0.62, -1.58, 0.12, 0.2, 0.05, C.dark, true);      // boca en "w"
+  H(-0.22, 0.45, -1.58, 0.3, 0.1, 0.05, C.dark, true);
+  H(0.22, 0.45, -1.58, 0.3, 0.1, 0.05, C.dark, true);
+
+  S.forEach(s => {
+    H(s * 0.85, 1.45, -1.33, 0.55, 0.7, 0.1, C.ink, true);          // ojo
+    H(s * 0.85 + 0.1, 1.65, -1.39, 0.2, 0.2, 0.05, 0xffffff, true); // brillo
+    H(s * 0.75, 1.2, -1.39, 0.2, 0.1, 0.05, C.cyan, true);          // reflejo de la pantalla
+    H(s * 1.3, 0.9, -1.33, 0.5, 0.22, 0.05, 0xff7ac0, true);        // mejilla sonrojada
+    H(s * 1.85, 0.7, -0.9, 0.35, 0.7, 0.8, C.furLight);             // pelusa de la mejilla
+    [-1, 0, 1].forEach(k => {                                       // bigotes
+      const w = H(s * 2.05, 0.75 + k * 0.2, -1.4, 1.1, 0.05, 0.05, 0xffe8f8, true);
+      w.rotation.z = s * k * 0.15;
+    });
+  });
+
+  // rayas de tabby (nuca y coronilla)
+  H(0, 2.0, 1.31, 0.28, 0.9, 0.06, C.furDark);
+  H(-0.7, 1.9, 1.31, 0.28, 0.7, 0.06, C.furDark);
+  H(0.7, 1.9, 1.31, 0.28, 0.7, 0.06, C.furDark);
+  H(0, 2.62, 0.3, 0.28, 0.06, 1.3, C.furDark);
+  H(-0.7, 2.62, 0.3, 0.28, 0.06, 1.0, C.furDark);
+  H(0.7, 2.62, 0.3, 0.28, 0.06, 1.0, C.furDark);
+
+  // orejas escalonadas
+  const ears = S.map(s => {
+    const e = new THREE.Group(); e.position.set(s * 1.25, 2.45, 0.3);
+    e.rotation.z = e.userData.rz = -s * 0.18; head.add(e);
+    addBlock(0, 0.3, 0, 1.3, 0.6, 0.7, C.fur, e);
+    addBlock(0, 0.85, 0, 1.0, 0.5, 0.6, C.fur, e);
+    addBlock(0, 1.3, 0, 0.7, 0.45, 0.5, C.fur, e);
+    addBlock(0, 1.7, 0, 0.4, 0.4, 0.4, C.tip, e);
+    addBlock(0, 0.4, -0.34, 0.8, 0.5, 0.1, C.ear, e);   // interior
+    addBlock(0, 0.9, -0.32, 0.5, 0.4, 0.1, C.ear, e);
+    addBlock(0, 1.3, -0.28, 0.25, 0.3, 0.1, C.ear, e);
+    return e;
+  });
+
+  // auriculares gamer
+  H(0, 2.78, -0.35, 3.9, 0.3, 0.6, C.dark);               // diadema
+  S.forEach(s => {
+    H(s * 2.0, 1.7, -0.35, 0.3, 2.0, 0.6, C.dark);        // varilla lateral
+    H(s * 2.4, 1.0, -0.3, 0.6, 1.6, 1.5, C.dark);         // almohadilla
+    H(s * 2.75, 1.0, -0.3, 0.1, 1.0, 1.0, C.cyan, true);  // placa luminosa
+  });
+  H(-2.4, 0.45, -1.6, 0.18, 0.18, 1.1, C.dark);           // micrófono
+  H(-1.55, 0.45, -2.06, 1.7, 0.18, 0.18, C.dark);
+  H(-0.7, 0.45, -2.06, 0.4, 0.4, 0.4, C.ear);
+
+  // --- Cola larga en S (curva de Bézier) ---
   const tailSegs = [];
-  for (let i = 0; i < 11; i++) {
-    const s = addBlock(0.2 + i * 0.38, 0.1 + Math.pow(i - 4, 2) * 0.06 - 0.5 + i * 0.05, 0, 0.55, 0.55, 0.55, i > 8 ? EAR : PINK, tail);
-    s.userData.i = i; tailSegs.push(s);
+  const bez = (t, a, b, c, d) => (1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * b + 3 * (1 - t) * t * t * c + t ** 3 * d;
+  const NT = 20;
+  for (let i = 0; i < NT; i++) {
+    const t = i / (NT - 1);
+    const x = bez(t, 1.2, 5.4, 3.0, 5.2), y = bez(t, 3.4, 3.0, 6.2, 9.0);
+    const size = 0.72 - t * 0.2;
+    const col = i >= NT - 3 ? C.furLight : (i % 4 === 3 ? C.furDark : C.fur);
+    const seg = addBlock(x, y, CZ + 1.1, size, size, size, col, cat);
+    seg.userData = { bx: x, bz: CZ + 1.1 };
+    tailSegs.push(seg);
   }
 
-  // ===== PANELES FLOTANTES (más juntos para caber en la columna) =====
+  // --- Animación de la gata (se llama desde animar) ---
+  function animarGata(t) {
+    head.rotation.y = Math.sin(t * 0.6) * 0.18;
+    head.rotation.z = Math.sin(t * 0.9 + 1) * 0.03;
+    head.position.y = 7.2 + Math.sin(t * 1.6) * 0.05;
+    ears.forEach((e, i) => {
+      const tw = Math.max(0, Math.sin(t * 1.1 + i * 2.4) - 0.92) * 5;   // sacudida ocasional
+      e.rotation.z = e.userData.rz - Math.sign(e.userData.rz) * tw;
+    });
+    const typing = t > 0 && Math.sin(t * 0.5) > -0.4 ? 1 : 0;           // teclea a ratos
+    paws.forEach(p => { p.position.y = p.userData.y0 + typing * Math.max(0, Math.sin(t * 16 + p.userData.ph)) * 0.14; });
+    tailSegs.forEach((s, i) => {
+      const w = t * 2.2 - i * 0.45;
+      s.position.x = s.userData.bx + Math.sin(w) * i * 0.035;
+      s.position.z = s.userData.bz + Math.cos(w) * i * 0.02;
+    });
+  }
+
+  // ===== PANELES FLOTANTES =====
   const ICONS = {
     paw:  ["#.#.#", ".###.", "#####", "#####", ".###."],
     fish: ["..###..#", "#######.", "##.####.", "#######.", "..###..#"],
@@ -192,7 +297,7 @@
       etiqueta.hidden = !hover;
       if (hover) {
         const r = cv.getBoundingClientRect();
-        etiqueta.textContent = NOMBRES[hover.modulo];
+        etiqueta.textContent = NOMBRES[hover.modulo] || 'Decorativo';
         etiqueta.style.left = (e.clientX - r.left) + 'px'; etiqueta.style.top = (e.clientY - r.top) + 'px';
       }
       return;
@@ -235,8 +340,7 @@
       p.g.scale.setScalar(p.g.scale.x + (esc - p.g.scale.x) * 0.2);
       p.faceMat.emissiveIntensity = 0.3 + Math.sin(t * 3 + p.ph * 2) * 0.15 + (Math.sin(t * 11 + p.ph) > 0.95 ? 0.25 : 0) + (p === hover ? 0.4 : 0);
     });
-    tailSegs.forEach(s => { s.position.z = Math.sin(t * 3 - s.userData.i * 0.5) * s.userData.i * 0.1; });
-    tail.rotation.y = Math.sin(t * 2) * 0.25;
+    animarGata(t);
     tmp.setHSL(0.88 + Math.sin(t * 0.7) * 0.05, 1, 0.8 + Math.sin(t * 1.3) * 0.05);
     screen.material.color.copy(tmp); screenLight.color.copy(tmp);
     sparks.forEach(s => { s.position.y += Math.sin(t * s.userData.sp * 3 + s.userData.ph) * 0.008; s.rotation.y = t * s.userData.sp; });
@@ -251,7 +355,9 @@
 })();
 
 
-
+/* =========================================================
+   Paneles (Sobre mí, Experiencia, Proyectos, Contacto)
+   ========================================================= */
 const paneles = document.querySelectorAll('.panel');
 const botones = document.querySelectorAll('.menu-btn');
 let abiertoPor = null;
