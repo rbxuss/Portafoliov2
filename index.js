@@ -389,3 +389,38 @@ paneles.forEach(p => {
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape') cerrar();
 });
+
+
+(function () {
+  const h1s = document.querySelectorAll('.hero-text h1');
+  const cursor = document.querySelector('.hero-text .cursor');
+  if (!h1s.length || !cursor) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+ 
+  // guarda cada nombre completo y vacía el texto (el lector de pantalla lo lee por aria-label)
+  const lineas = [...h1s].map(h => {
+    const nodo = h.firstChild;
+    const completo = nodo.textContent;
+    h.setAttribute('aria-label', completo);
+    nodo.textContent = '';
+    return { h, nodo, completo };
+  });
+ 
+  let i = 0;
+  function escribir() {
+    if (i >= lineas.length) return;
+    const { h, nodo, completo } = lineas[i];
+    h.appendChild(cursor);                 // el cursor "salta" a la línea que se escribe
+    let k = 0;
+    const id = setInterval(() => {
+      nodo.textContent = completo.slice(0, ++k);
+      if (k >= completo.length) {
+        clearInterval(id);
+        i++;
+        setTimeout(escribir, 250);
+      }
+    }, 90);
+  }
+ 
+  setTimeout(escribir, 600);
+})();
