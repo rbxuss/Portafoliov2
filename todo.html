@@ -1,0 +1,1274 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Julian Andrés Carvajalino Quintero | Desarrollador Web</title>
+  <meta name="description" content="Portafolio de Julian Carvajalino: experiencias web interactivas con 3D y datos.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================================================
+       VARIABLES Y BASE
+       ========================================================= */
+    :root {
+      --fondo: #0d0617;
+      --morado: #6b3fa0;
+      --texto: #f3e9ff;
+      --texto-suave: #cdbfe6;
+      --acento: #ff5fd2;
+      --acento-2: #3ff0ff;          /* cian complementario */
+      --alto-header: 60px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;             /* una sola pantalla, sin scroll */
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background: var(--fondo);
+      color: var(--texto);
+    }
+
+    a { text-decoration: none; }
+
+    a:focus-visible,
+    button:focus-visible {
+      outline: 3px solid var(--acento);
+      outline-offset: 3px;
+    }
+
+    /* =========================================================
+       HEADER
+       ========================================================= */
+    body > header {
+      height: var(--alto-header);
+      width: 100%;
+      background: linear-gradient(to right, #240433, #20064b);
+      display: flex;
+      align-items: center;
+    }
+
+    header .logo { height: 100%; display: block; }
+    header .logo img { height: 100%; padding: 10px; }
+
+    /* =========================================================
+       MAIN + FONDO
+       Capas: fondo (1) < escena 3D (2) < texto (3) < scanlines (4) < paneles (10)
+       ========================================================= */
+    main {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - var(--alto-header));
+      height: calc(100dvh - var(--alto-header));
+      overflow: hidden;
+    }
+
+    .Presentacion {
+      height: 100%;
+      width: 100%;
+      background:
+        radial-gradient(ellipse at 72% 55%, rgba(255, 95, 210, .22), transparent 55%),
+        radial-gradient(ellipse at 15% 45%, rgba(63, 240, 255, .08), transparent 50%),
+        linear-gradient(180deg, #140623 0%, #0d0617 100%);
+    }
+
+    main .overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(13, 6, 23, .35);
+      backdrop-filter: blur(8px);
+      box-shadow:
+        inset 0 0 50px rgba(190, 80, 255, .25),
+        inset 0 0 100px rgba(255, 100, 200, .15);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* mancha rosa detrás del escritorio */
+    main::before {
+      content: "";
+      position: absolute;
+      z-index: 1;
+      pointer-events: none;
+      width: 46vw;
+      height: 46vw;
+      right: 6%;
+      top: 8%;
+      border-radius: 50%;
+      background: rgba(255, 95, 210, .35);
+      filter: blur(90px);
+      animation: flota 14s ease-in-out infinite alternate;
+    }
+
+    /* mancha cian abajo a la izquierda */
+    .Presentacion::after {
+      content: "";
+      position: absolute;
+      z-index: 1;
+      pointer-events: none;
+      width: 34vw;
+      height: 34vw;
+      left: 22%;
+      bottom: -14%;
+      border-radius: 50%;
+      background: rgba(63, 240, 255, .16);
+      filter: blur(90px);
+      animation: flota 18s ease-in-out infinite alternate-reverse;
+    }
+
+    @keyframes flota {
+      to { transform: translate(-6vw, 6vh) scale(1.2); }
+    }
+
+    /* scanlines estilo CRT (no bloquean el mouse) */
+    main::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      pointer-events: none;
+      background: repeating-linear-gradient(0deg, rgba(255, 255, 255, .035) 0 1px, transparent 1px 3px);
+      animation: scan 8s linear infinite;
+    }
+
+    @keyframes scan {
+      to { background-position: 0 60px; }
+    }
+
+    /* =========================================================
+       HERO (texto a la izquierda)
+       El texto no bloquea el mouse: se puede arrastrar el 3D por debajo.
+       Solo los elementos interactivos reactivan pointer-events.
+       ========================================================= */
+    .hero {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      width: 40%;
+      z-index: 3;
+      display: flex;
+      align-items: center;
+      padding: 24px 48px;
+      pointer-events: none;
+      background: linear-gradient(90deg, rgba(13, 6, 23, .8), rgba(26, 6, 48, .45));
+      backdrop-filter: blur(6px);
+      clip-path: polygon(0 0, 85% 0, 100% 15%, 85% 30%, 100% 50%, 85% 70%, 100% 85%, 85% 100%, 0 100%);
+    }
+
+    .hero-text {
+      width: 100%;
+      max-width: 580px;
+      container-type: inline-size;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      min-width: 0;
+      pointer-events: none;
+      text-shadow: 2px 2px 14px rgba(13, 6, 23, .95);
+    }
+
+    .hero-text a,
+    .hero-text button,
+    .hero-text .acciones,
+    .hero-text .redes {
+      pointer-events: auto;
+    }
+
+    /* entrada escalonada */
+    .hero-text > * {
+      animation: entra .5s steps(5) calc(var(--d, 0) * 1s) both;
+    }
+    .hero-text > :nth-child(1) { --d: .10; }   /* saludo */
+    .hero-text > :nth-child(2) { --d: .30; }   /* nombre */
+    .hero-text > :nth-child(3) { --d: 1.2; }   /* frase */
+    .hero-text > :nth-child(4) { --d: 1.5; }   /* etiquetas */
+    .hero-text > :nth-child(5) { --d: 1.8; }   /* botones */
+    .hero-text > :nth-child(6) { --d: 2.0; }   /* redes */
+
+    @keyframes entra {
+      from { opacity: 0; transform: translateY(14px); }
+    }
+
+    .saludo {
+      font-family: 'Press Start 2P', monospace;
+      font-size: 13px;
+      letter-spacing: .05em;
+      color: var(--acento-2);
+      text-shadow: 0 0 10px rgba(63, 240, 255, .6);
+    }
+
+    .hero-text h1 {
+      font-family: 'Press Start 2P', monospace;
+      font-weight: 400;
+      font-size: clamp(16px, 8cqi, 48px);
+      line-height: 1.15;
+      text-transform: uppercase;
+
+      /* degradado rosa → cian */
+      background: linear-gradient(90deg, var(--acento) 0%, #c77dff 55%, var(--acento-2) 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      text-shadow: none;
+      filter: drop-shadow(0 0 10px rgba(255, 95, 210, .55)) drop-shadow(0 0 28px rgba(107, 63, 160, .8));
+
+      animation:
+        entra .5s steps(5) calc(var(--d, 0) * 1s) both,
+        glitch 6s 4s infinite;
+    }
+
+    .hero-text h1 .ln {
+      display: block;
+      min-height: 1.15em;           /* evita saltos mientras se "escribe" */
+    }
+
+    @keyframes glitch {
+      0%, 91%, 100% { transform: none; }
+      92% { transform: translate(-4px, 0) skewX(-6deg); }
+      94% { transform: translate(4px, 1px) skewX(4deg); }
+      96% { transform: translate(-2px, -1px); }
+    }
+
+    .cursor {
+      display: inline-block;
+      width: .3em;
+      height: .85em;
+      margin-left: 12px;
+      background: var(--acento-2);
+      box-shadow: 0 0 12px var(--acento-2);
+      vertical-align: baseline;
+      animation: parpadeo 1s steps(2) infinite;
+    }
+
+    @keyframes parpadeo {
+      50% { opacity: 0; }
+    }
+
+    .frase {
+      font-size: 20px;
+      line-height: 1.6;
+      max-width: 34ch;
+      color: #eadcff;
+    }
+
+    .frase strong { color: var(--acento-2); font-weight: 500; }
+
+    /* ---------- Etiquetas (discretas) ---------- */
+    .etiquetas {
+      list-style: none;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 20px;
+      max-width: 600px;
+    }
+
+    .etiquetas li {
+      font-size: 14px;
+      color: #cdb9ee;
+    }
+
+    .etiquetas li::before {
+      content: "# ";
+      color: var(--acento-2);
+    }
+
+    /* ---------- Botones ---------- */
+    .acciones {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-top: 4px;
+    }
+
+    .btn {
+      display: inline-block;
+      font-family: 'Press Start 2P', monospace;
+      font-size: 12px;
+      line-height: 1.2;
+      padding: 16px 22px;
+      border-radius: 0;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: transform .15s steps(3), box-shadow .15s, background .15s;
+    }
+
+    .btn-primario {
+      position: relative;
+      background: var(--acento-2);
+      color: #0d0617;
+      border: 2px solid var(--acento-2);
+      box-shadow: 4px 4px 0 var(--acento), 0 0 24px rgba(63, 240, 255, .45);
+      text-shadow: none;
+    }
+
+    .btn-primario:hover {
+      transform: translate(-2px, -2px);
+      box-shadow: 6px 6px 0 var(--acento), 0 0 32px rgba(63, 240, 255, .7);
+    }
+
+    /* onda pulsante */
+    .btn-primario::after {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border: 2px solid var(--acento-2);
+      pointer-events: none;
+      animation: onda 2.2s ease-out infinite;
+    }
+
+    @keyframes onda {
+      from { opacity: .8; transform: scale(1); }
+      to   { opacity: 0;  transform: scale(1.15, 1.6); }
+    }
+
+    .btn-secundario {
+      background: transparent;
+      color: var(--acento);
+      border: 2px solid var(--acento);
+      text-shadow: none;
+    }
+
+    .btn-secundario:hover {
+      background: rgba(255, 95, 210, .15);
+      box-shadow: 0 0 20px rgba(255, 95, 210, .5);
+    }
+
+    /* ---------- Redes (SVG en línea) ---------- */
+    .redes { display: flex; gap: 14px; }
+
+    .redes a {
+      display: grid;
+      place-items: center;
+      width: 44px;
+      height: 44px;
+      color: var(--texto-suave);
+      border: 2px solid var(--morado);
+      background: rgba(13, 6, 23, .55);
+      transition: transform .15s steps(3), border-color .15s, box-shadow .15s, color .15s;
+    }
+
+    .redes a:hover {
+      transform: translate(-2px, -2px);
+      color: var(--acento-2);
+      border-color: var(--acento-2);
+      box-shadow: 3px 3px 0 var(--acento-2);
+    }
+
+    .redes svg { width: 22px; height: 22px; }
+
+    /* =========================================================
+       ESCENA 3D (pantalla completa)
+       ========================================================= */
+    .hero-gato-caja {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+    }
+
+    .hero-gato-caja canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* etiqueta que sigue al mouse al pasar sobre una ventana */
+    .etiqueta-3d {
+      position: absolute;
+      z-index: 4;
+      transform: translate(14px, -38px);
+      padding: 7px 10px;
+      font: 400 10px 'Press Start 2P', monospace;
+      color: var(--acento);
+      background: rgba(26, 6, 48, .92);
+      border: 2px solid var(--acento);
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    .pista {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 14px;
+      z-index: 3;
+      text-align: center;
+      font-size: 13px;
+      color: var(--texto-suave);
+      text-shadow: 0 1px 8px rgba(13, 6, 23, .95);
+      pointer-events: none;
+      animation: respira 2.6s ease-in-out infinite;
+    }
+
+    @keyframes respira {
+      50% { opacity: .4; }
+    }
+
+    /* botones solo para teclado / lector de pantalla: ocultos hasta recibir foco */
+    .menu {
+      position: absolute;
+      left: 50%;
+      bottom: 48px;
+      transform: translateX(-50%);
+      z-index: 5;
+      display: flex;
+      gap: 10px;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+
+    .menu:focus-within {
+      width: auto;
+      height: auto;
+      overflow: visible;
+      clip-path: none;
+    }
+
+    .menu-btn {
+      font: 500 15px 'Space Grotesk', sans-serif;
+      padding: 12px 18px;
+      color: var(--texto);
+      background: rgba(26, 6, 48, .9);
+      border: 2px solid var(--morado);
+      cursor: pointer;
+    }
+
+    .menu-btn:hover { border-color: var(--acento); color: var(--acento); }
+
+    /* =========================================================
+       PANELES (se abren por encima de todo)
+       ========================================================= */
+    .panel {
+      position: absolute;
+      inset: 0;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px;
+      background: rgba(8, 3, 16, .78);
+      backdrop-filter: blur(6px);
+      animation: aparece .25s ease-out;
+    }
+
+    .panel[hidden] { display: none; }
+
+    .panel-card {
+      position: relative;
+      width: 100%;
+      max-width: 720px;
+      max-height: 100%;
+      overflow-y: auto;             /* si el contenido es largo, se desplaza dentro */
+      padding: 40px;
+      background: #1a0b2e;
+      border: 2px solid var(--morado);
+      box-shadow: 0 0 60px rgba(138, 63, 252, .35);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      animation: sube .3s ease-out;
+    }
+
+    .panel-card .btn { align-self: flex-start; }
+
+    @keyframes aparece { from { opacity: 0; } }
+    @keyframes sube { from { transform: translateY(24px); opacity: 0; } }
+
+    .panel-card h2 {
+      font-family: 'Press Start 2P', monospace;
+      font-weight: 400;
+      font-size: clamp(18px, 2.4vw, 26px);
+      line-height: 1.4;
+      color: var(--acento);
+      padding-right: 40px;
+    }
+
+    .panel-card p {
+      font-size: 18px;
+      line-height: 1.6;
+      color: var(--texto);
+      max-width: 62ch;
+    }
+
+    .panel-cerrar {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      width: 44px;
+      height: 44px;
+      font-size: 28px;
+      line-height: 1;
+      color: var(--texto-suave);
+      background: none;
+      border: 2px solid var(--morado);
+      cursor: pointer;
+      transition: color .2s, border-color .2s;
+    }
+
+    .panel-cerrar:hover { color: var(--acento); border-color: var(--acento); }
+
+    /* Experiencia */
+    .linea {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+    }
+
+    .linea li {
+      padding-left: 18px;
+      border-left: 3px solid var(--morado);
+    }
+
+    .fecha { font-size: 14px; color: var(--texto-suave); }
+
+    .linea h3,
+    .proyecto h3 {
+      font-size: 20px;
+      color: var(--texto);
+      margin: 4px 0;
+    }
+
+    .linea p { font-size: 16px; }
+
+    /* Proyectos */
+    .rejilla {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px;
+    }
+
+    .proyecto {
+      display: block;
+      padding: 20px;
+      border: 2px solid var(--morado);
+      color: inherit;
+      transition: border-color .2s, background .2s;
+    }
+
+    .proyecto:hover {
+      border-color: var(--acento);
+      background: rgba(255, 95, 210, .08);
+    }
+
+    .proyecto p { font-size: 15px; color: var(--texto-suave); }
+
+    /* Contacto */
+    .enlaces {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .enlaces a {
+      font-size: 18px;
+      color: var(--texto-suave);
+      border-bottom: 1px solid var(--morado);
+    }
+
+    .enlaces a:hover { color: var(--acento); border-color: var(--acento); }
+
+    /* =========================================================
+       RESPONSIVE
+       ========================================================= */
+    @media (max-width: 1100px) {
+      .hero { width: 48%; padding: 24px 32px; }
+    }
+
+    /* Móvil: el texto va arriba y la escena queda detrás, más abajo */
+    @media (max-width: 700px) {
+      .hero {
+        width: 100%;
+        align-items: flex-start;
+        padding: 20px 20px 16px;
+        clip-path: none;
+        background: linear-gradient(180deg, rgba(13, 6, 23, .85), rgba(13, 6, 23, 0));
+      }
+
+      .hero-text { gap: 12px; }
+      .saludo { font-size: 11px; }
+      .frase { font-size: 16px; }
+      .etiquetas { gap: 6px 14px; }
+      .etiquetas li { font-size: 12px; }
+      .btn { font-size: 10px; padding: 12px 14px; }
+      .pista { font-size: 12px; bottom: 10px; }
+      .panel { padding: 16px; }
+      .panel-card { padding: 28px 22px; }
+    }
+
+    /* =========================================================
+       ACCESIBILIDAD: reducir movimiento
+       ========================================================= */
+    @media (prefers-reduced-motion: reduce) {
+      main::before,
+      main::after,
+      .Presentacion::after,
+      .hero-text > *,
+      .hero-text h1,
+      .cursor,
+      .btn-primario::after,
+      .pista,
+      .panel,
+      .panel-card {
+        animation: none;
+      }
+
+      .menu-btn,
+      .btn,
+      .redes a { transition: none; }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <a href="#" class="logo">
+      <img src="https://i.ibb.co/m5TYHz9v/image-removebg-preview.png" alt="Logo de Julian">
+    </a>
+  </header>
+
+  <main>
+    <section class="Presentacion">
+
+      <!-- ========== TEXTO ========== -->
+      <section class="hero">
+        <div class="hero-text">
+          <p class="saludo">&gt; Hola, soy</p>
+
+          <h1 aria-label="Julian Carvajalino">
+            <span class="ln">Julian</span>
+            <span class="ln">Carvajalino<span class="cursor" aria-hidden="true"></span></span>
+          </h1>
+
+          <p class="frase">Creo experiencias web interactivas con <strong>3D</strong> y <strong>datos</strong>.</p>
+
+          <ul class="etiquetas">
+            <li>Desarrollador Web Junior</li>
+            <li>Interfaces 3D</li>
+            <li>Interfaces Creativas</li>
+            <li>Automatización de Análisis</li>
+          </ul>
+
+          <div class="acciones">
+            <a href="cv.pdf" download class="btn btn-primario">Descargar CV</a>
+            <button type="button" class="btn btn-secundario" data-abrir="contacto">Contáctame</button>
+          </div>
+
+          <div class="redes">
+            <a href="https://github.com/TU-USUARIO" aria-label="GitHub" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/>
+              </svg>
+            </a>
+            <a href="https://linkedin.com/in/TU-USUARIO" aria-label="LinkedIn" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"/>
+                <rect x="2" y="9" width="4" height="12"/>
+                <circle cx="4" cy="4" r="2"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ========== FONDO + ESCENA 3D ========== -->
+      <div class="overlay"></div>
+      <div id="escena-3d" class="hero-gato-caja" role="img"
+        aria-label="Escena 3D de bloques: gata gamer frente a un escritorio. Haz clic en las ventanas flotantes para abrir cada sección."></div>
+
+      <!-- Acceso por teclado / lector de pantalla (se muestra al enfocar con Tab).
+           Con el mouse se abren haciendo clic en las ventanas flotantes del 3D. -->
+      <nav class="menu" aria-label="Secciones del portafolio">
+        <button type="button" class="menu-btn" data-panel="sobre-mi" aria-haspopup="dialog">Sobre mí</button>
+        <button type="button" class="menu-btn" data-panel="experiencia" aria-haspopup="dialog">Experiencia</button>
+        <button type="button" class="menu-btn" data-panel="proyectos" aria-haspopup="dialog">Proyectos</button>
+        <button type="button" class="menu-btn" data-panel="contacto" aria-haspopup="dialog">Contacto</button>
+      </nav>
+
+      <p class="pista" aria-hidden="true">Arrastra para rotar · haz clic en las ventanas flotantes</p>
+
+      <!-- ========== PANELES ========== -->
+      <div class="panel" id="sobre-mi" role="dialog" aria-modal="true" aria-labelledby="t-sobre-mi" hidden>
+        <div class="panel-card">
+          <button type="button" class="panel-cerrar" aria-label="Cerrar">&times;</button>
+          <h2 id="t-sobre-mi">Sobre mí</h2>
+          <p>Soy desarrollador web junior y me gusta construir interfaces que se sienten vivas: 3D, animación y detalles creativos.</p>
+          <p>También trabajo con datos y automatizo análisis para que la información se entienda más rápido.</p>
+          <p>[Agrega aquí de dónde eres, qué estudiaste y qué estás buscando ahora.]</p>
+        </div>
+      </div>
+
+      <div class="panel" id="experiencia" role="dialog" aria-modal="true" aria-labelledby="t-experiencia" hidden>
+        <div class="panel-card">
+          <button type="button" class="panel-cerrar" aria-label="Cerrar">&times;</button>
+          <h2 id="t-experiencia">Experiencia</h2>
+          <ul class="linea">
+            <li>
+              <span class="fecha">[Año – Año]</span>
+              <h3>[Cargo]</h3>
+              <p>[Empresa o proyecto] · [Qué hiciste y qué lograste.]</p>
+            </li>
+            <li>
+              <span class="fecha">[Año – Año]</span>
+              <h3>[Cargo]</h3>
+              <p>[Empresa o proyecto] · [Qué hiciste y qué lograste.]</p>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="panel" id="proyectos" role="dialog" aria-modal="true" aria-labelledby="t-proyectos" hidden>
+        <div class="panel-card">
+          <button type="button" class="panel-cerrar" aria-label="Cerrar">&times;</button>
+          <h2 id="t-proyectos">Proyectos</h2>
+          <div class="rejilla">
+            <a href="#" class="proyecto"><h3>[Proyecto 1]</h3><p>[Una línea de qué es y con qué lo hiciste.]</p></a>
+            <a href="#" class="proyecto"><h3>[Proyecto 2]</h3><p>[Una línea de qué es y con qué lo hiciste.]</p></a>
+            <a href="#" class="proyecto"><h3>[Proyecto 3]</h3><p>[Una línea de qué es y con qué lo hiciste.]</p></a>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel" id="contacto" role="dialog" aria-modal="true" aria-labelledby="t-contacto" hidden>
+        <div class="panel-card">
+          <button type="button" class="panel-cerrar" aria-label="Cerrar">&times;</button>
+          <h2 id="t-contacto">Contacto</h2>
+          <p>¿Tienes una idea o una oportunidad? Escríbeme.</p>
+          <ul class="enlaces">
+            <li><a href="mailto:tucorreo@ejemplo.com">tucorreo@ejemplo.com</a></li>
+            <li><a href="https://github.com/TU-USUARIO" target="_blank" rel="noopener">GitHub</a></li>
+            <li><a href="https://linkedin.com/in/TU-USUARIO" target="_blank" rel="noopener">LinkedIn</a></li>
+          </ul>
+          <a href="cv.pdf" download class="btn btn-primario">Descargar CV</a>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Three.js r128 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+    /* =========================================================
+       ESTADO COMPARTIDO ENTRE LA ESCENA Y LOS PANELES
+       ========================================================= */
+    let panelAbierto = false;   // la escena se pausa mientras haya un panel abierto
+
+    /* =========================================================
+       ESCENA 3D VOXEL (Three.js r128)
+       Se dibuja dentro de <div id="escena-3d">
+       ========================================================= */
+    (function () {
+      const caja = document.getElementById('escena-3d');
+      if (!caja || !window.THREE) return;
+
+      // ===== BASE =====
+      const scene = new THREE.Scene();
+      const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true }); // alpha: se ve el fondo de la página
+      renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      caja.appendChild(renderer.domElement);
+      const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 300);
+
+      // ===== HELPER (geometrías y materiales compartidos: menos memoria y menos trabajo para la GPU) =====
+      const geos = new Map(), mats = new Map();
+      const geo = (w, h, d) => {
+        const k = w + '_' + h + '_' + d;
+        if (!geos.has(k)) geos.set(k, new THREE.BoxGeometry(w, h, d));
+        return geos.get(k);
+      };
+      const mat = (color, basic) => {
+        const k = color + (basic ? 'b' : 's');
+        if (!mats.has(k)) mats.set(k, basic
+          ? new THREE.MeshBasicMaterial({ color })
+          : new THREE.MeshStandardMaterial({ color, roughness: .8, metalness: .05 }));
+        return mats.get(k);
+      };
+      function addBlock(x, y, z, w, h, d, color, group, basic) {
+        const m = new THREE.Mesh(geo(w, h, d), mat(color, basic));
+        m.position.set(x, y, z); m.castShadow = !basic; m.receiveShadow = true;
+        (group || scene).add(m); return m;
+      }
+      const mkGroup = () => { const g = new THREE.Group(); scene.add(g); return g; };
+
+      // ===== LUCES =====
+      scene.add(new THREE.AmbientLight(0x8a5ac0, 0.7));
+      const sun = new THREE.DirectionalLight(0xff9ad0, 0.9);
+      sun.position.set(10, 28, 14); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048);
+      Object.assign(sun.shadow.camera, { left: -25, right: 25, top: 25, bottom: -25, near: 1, far: 80 });
+      scene.add(sun);
+      const screenLight = new THREE.PointLight(0xff9ad0, 1.2, 30);
+      screenLight.position.set(0, 7.5, -3); scene.add(screenLight);
+      // luz de contorno cian: separa a la gata del fondo
+      const rim = new THREE.PointLight(0x3ff0ff, 0.9, 20);
+      rim.position.set(-6, 10, 9); scene.add(rim);
+
+      // ===== ESCRITORIO =====
+      const desk = mkGroup();
+      addBlock(0, 4.2, -3, 16, 0.6, 8, 0xe87ac0, desk);
+      addBlock(0, 3.8, -3, 15.4, 0.4, 7.4, 0x7a3a9a, desk);
+      addBlock(-7.2, 1.95, -3, 1.4, 3.9, 7, 0x7a3a9a, desk);
+      addBlock(7.2, 1.95, -3, 1.4, 3.9, 7, 0x7a3a9a, desk);
+      addBlock(-7.2, 4.1, -3, 1.6, 0.2, 8.2, 0x7a3a9a, desk);
+      addBlock(7.2, 4.1, -3, 1.6, 0.2, 8.2, 0x7a3a9a, desk);
+      addBlock(0, 4.54, -2.2, 9.5, 0.08, 3.4, 0x5a4a7a, desk);
+
+      // ===== MONITOR (con barras de ecualizador y líneas de código animadas) =====
+      const monitor = mkGroup();
+      addBlock(0, 4.6, -5.6, 2.6, 0.2, 1.6, 0x6a5a8a, monitor);
+      addBlock(0, 5.2, -5.6, 0.9, 1.2, 0.8, 0x6a5a8a, monitor);
+      addBlock(0, 7.7, -5.6, 7, 4.4, 0.5, 0x5a4a7a, monitor);
+      const screen = addBlock(0, 7.7, -5.3, 6.4, 3.8, 0.1, 0xffb0e0, monitor, true);
+      screen.material = new THREE.MeshBasicMaterial({ color: 0xffb0e0 });   // propio: su color cambia en cada frame
+      addBlock(0, 7.6, -5.22, 4.2, 1.0, 0.05, 0x3a2a5a, monitor, true);
+
+      const barras = [];
+      for (let i = 0; i < 7; i++) barras.push(addBlock(-1.5 + i * 0.5, 7.65, -5.18, 0.3, 0.45, 0.04, 0xffb0e0, monitor, true));
+
+      const lineas = [];
+      for (let i = 0; i < 5; i++) {
+        const w = 1.5 + Math.random() * 2.5;
+        const l = addBlock(-2.8 + w / 2, 9.3 - i * 0.28, -5.22, w, 0.14, 0.04, i % 2 ? 0x7a3a9a : 0x3a2a5a, monitor, true);
+        l.userData = { w, x0: -2.8, ph: i * 1.3 };
+        lineas.push(l);
+      }
+      addBlock(0, 6.55, -5.2, 1.6, 0.12, 0.04, 0x7a3a9a, monitor, true);
+
+      function animarMonitor(t) {
+        barras.forEach((b, i) => { b.scale.y = 0.4 + Math.abs(Math.sin(t * 3 + i * 0.9)) * 1.3; });
+        lineas.forEach(l => {
+          const k = 0.2 + 0.8 * (Math.sin(t * 0.9 + l.userData.ph) * 0.5 + 0.5);
+          l.scale.x = k;
+          l.position.x = l.userData.x0 + l.userData.w * k / 2;   // el borde izquierdo queda fijo
+        });
+      }
+
+      // ===== TECLADO, MOUSE, ESTAMBRE =====
+      const kb = mkGroup();
+      addBlock(0, 4.7, -1.6, 5.4, 0.3, 1.9, 0xff8ac8, kb);
+      for (let r = 0; r < 4; r++) for (let c = 0; c < 12; c++)
+        addBlock(-2.3 + c * 0.42, 4.95, -2.2 + r * 0.42, 0.34, 0.2, 0.34, 0xb48ae0, kb);
+      const mouse = mkGroup();
+      addBlock(4.6, 4.7, -1.6, 0.7, 0.3, 1.1, 0xff8ac8, mouse);
+      addBlock(4.6, 4.9, -1.9, 0.12, 0.15, 0.35, 0x6a5a8a, mouse);
+      const yarn = mkGroup();
+      [[0, 0, 0xe87ac0], [Math.PI / 4, 0, 0x7a3a9a], [0, Math.PI / 4, 0xff8ac8]].forEach(([ry, rx, c]) => {
+        const m = addBlock(6.2, 5.4, -1.8, 1.2, 1.2, 1.2, c, yarn); m.rotation.y = ry; m.rotation.x = rx;
+      });
+      for (let i = 0; i < 4; i++) addBlock(5.3 - i * 0.5, 4.65, -1.2 + i * 0.25, 0.35, 0.12, 0.35, 0xe87ac0, yarn);
+
+      // ===== SILLA =====
+      const chair = mkGroup(); const CZ = 2.5;
+      addBlock(0, 1.4, CZ, 0.6, 1.8, 0.6, 0x6a5a8a, chair);
+      for (let i = 0; i < 5; i++) {
+        const a = i * Math.PI * 2 / 5 + 0.3;
+        const arm = addBlock(Math.sin(a) * 1.2, 0.65, CZ + Math.cos(a) * 1.2, 0.5, 0.3, 2.4, 0x3a2a5a, chair);
+        arm.rotation.y = a;
+        addBlock(Math.sin(a) * 2.3, 0.3, CZ + Math.cos(a) * 2.3, 0.55, 0.55, 0.55, 0xff8ac8, chair);
+      }
+      addBlock(0, 2.5, CZ, 3.8, 0.7, 3.8, 0x3a2a5a, chair);
+      addBlock(0, 2.9, CZ, 3.2, 0.12, 3.2, 0xff8ac8, chair);
+      addBlock(0, 4.6, CZ + 1.8, 3.6, 4, 0.6, 0x3a2a5a, chair);
+      addBlock(0, 6.9, CZ + 1.8, 2.6, 0.8, 0.6, 0x3a2a5a, chair);
+      addBlock(-1.9, 4.3, CZ + 1.8, 0.3, 3, 0.7, 0xff8ac8, chair);
+      addBlock(1.9, 4.3, CZ + 1.8, 0.3, 3, 0.7, 0xff8ac8, chair);
+      addBlock(0, 4.8, CZ + 2.15, 1.2, 1.0, 0.1, 0xff8ac8, chair);
+      addBlock(-0.4, 5.45, CZ + 2.15, 0.3, 0.3, 0.1, 0xff8ac8, chair);
+      addBlock(0.4, 5.45, CZ + 2.15, 0.3, 0.3, 0.1, 0xff8ac8, chair);
+      addBlock(-2.4, 4.2, CZ + 0.3, 0.6, 0.5, 2.4, 0x3a2a5a, chair);
+      addBlock(2.4, 4.2, CZ + 0.3, 0.6, 0.5, 2.4, 0x3a2a5a, chair);
+
+      // ===== GATA =====
+      const cat = mkGroup();
+      const C = {
+        fur: 0xf5a0d0, furLight: 0xffd6ee, furDark: 0xd070b0, ear: 0xff8ac8, tip: 0x7a3a9a,
+        hood: 0x8a52d6, hoodDark: 0x6a3aa8, dark: 0x2a1a4a, ink: 0x1a0b2e, cyan: 0x3ff0ff
+      };
+      const S = [-1, 1];
+      const ojos = [];
+      const sm = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };   // suavizado 0→1
+
+      // --- Piernas (sentada, colgando del asiento) ---
+      S.forEach(s => {
+        addBlock(s * 1.0, 3.55, CZ - 0.5, 1.2, 1.0, 2.3, C.fur, cat);       // muslo
+        addBlock(s * 1.0, 2.2, CZ - 1.7, 1.0, 2.0, 1.0, C.fur, cat);        // pantorrilla
+        addBlock(s * 1.0, 1.25, CZ - 1.9, 1.0, 0.4, 1.5, C.furLight, cat);  // pie
+      });
+
+      // --- Torso con sudadera ---
+      addBlock(0, 4.3, CZ - 0.2, 3.2, 2.5, 2.4, C.hood, cat);               // torso
+      addBlock(0, 3.25, CZ - 0.2, 3.3, 0.35, 2.5, C.hoodDark, cat);         // dobladillo
+      addBlock(0, 6.2, CZ - 0.4, 4.4, 1.4, 2.2, C.hood, cat);               // hombros
+      addBlock(0, 4.1, CZ - 1.45, 2.2, 1.0, 0.1, C.hoodDark, cat);          // bolsillo
+      S.forEach(s => addBlock(s * 0.5, 5.0, CZ - 1.45, 0.15, 1.1, 0.1, C.ear, cat)); // cordones
+      addBlock(0, 7.1, CZ - 0.5, 2.2, 0.6, 2.0, C.fur, cat);                // cuello
+
+      // --- Capucha caída hacia atrás ---
+      addBlock(0, 7.1, CZ + 0.65, 3.4, 1.3, 1.1, C.hoodDark, cat);
+      S.forEach(s => addBlock(s * 1.8, 6.95, CZ + 0.15, 0.7, 1.0, 1.7, C.hoodDark, cat));
+
+      // --- Brazos tecleando ---
+      const paws = [];
+      S.forEach(s => {
+        addBlock(s * 2.2, 5.7, CZ - 1.2, 1.0, 1.0, 2.4, C.hood, cat);       // brazo
+        addBlock(s * 1.7, 5.5, CZ - 2.6, 0.9, 0.8, 2.2, C.hood, cat);       // antebrazo
+        addBlock(s * 1.55, 5.5, CZ - 3.7, 0.95, 0.9, 0.25, C.ear, cat);     // puño de la manga
+        const paw = new THREE.Group(); paw.position.set(s * 1.55, 5.3, CZ - 4.0); cat.add(paw);
+        paw.userData = { y0: 5.3, ph: s > 0 ? 0 : 1.7 };
+        addBlock(0, 0, 0, 1.0, 0.55, 1.1, C.fur, paw);
+        [-0.22, 0.22].forEach(x => addBlock(x, 0, -0.57, 0.06, 0.35, 0.05, C.furDark, paw, true)); // deditos
+        paws.push(paw);
+      });
+
+      // --- Cabeza (grupo con pivote en el cuello) ---
+      const head = new THREE.Group(); head.position.set(0, 7.2, CZ - 0.5); cat.add(head);
+      const H = (x, y, z, w, h, d, c, basic) => addBlock(x, y, z, w, h, d, c, head, basic);
+
+      H(0, 1.3, 0, 3.6, 2.6, 2.6, C.fur);                    // cráneo
+      H(0, 0.75, -1.4, 1.5, 0.8, 0.3, C.furLight);           // hocico
+      H(0, 0.95, -1.6, 0.4, 0.25, 0.15, 0xff5fa8);           // nariz
+      H(0, 0.62, -1.58, 0.12, 0.2, 0.05, C.dark, true);      // boca en "w"
+      H(-0.22, 0.45, -1.58, 0.3, 0.1, 0.05, C.dark, true);
+      H(0.22, 0.45, -1.58, 0.3, 0.1, 0.05, C.dark, true);
+
+      S.forEach(s => {
+        ojos.push(H(s * 0.85, 1.45, -1.33, 0.55, 0.7, 0.1, C.ink, true));  // ojo
+        H(s * 0.85 + 0.1, 1.65, -1.39, 0.2, 0.2, 0.05, 0xffffff, true);    // brillo
+        H(s * 0.75, 1.2, -1.39, 0.2, 0.1, 0.05, C.cyan, true);             // reflejo de la pantalla
+        H(s * 1.3, 0.9, -1.33, 0.5, 0.22, 0.05, 0xff7ac0, true);           // mejilla sonrojada
+        H(s * 1.85, 0.7, -0.9, 0.35, 0.7, 0.8, C.furLight);                // pelusa de la mejilla
+        [-1, 0, 1].forEach(k => {                                          // bigotes
+          const w = H(s * 2.05, 0.75 + k * 0.2, -1.4, 1.1, 0.05, 0.05, 0xffe8f8, true);
+          w.rotation.z = s * k * 0.15;
+        });
+      });
+
+      // rayas de tabby (nuca y coronilla)
+      H(0, 2.0, 1.31, 0.28, 0.9, 0.06, C.furDark);
+      H(-0.7, 1.9, 1.31, 0.28, 0.7, 0.06, C.furDark);
+      H(0.7, 1.9, 1.31, 0.28, 0.7, 0.06, C.furDark);
+      H(0, 2.62, 0.3, 0.28, 0.06, 1.3, C.furDark);
+      H(-0.7, 2.62, 0.3, 0.28, 0.06, 1.0, C.furDark);
+      H(0.7, 2.62, 0.3, 0.28, 0.06, 1.0, C.furDark);
+
+      // orejas escalonadas
+      const ears = S.map(s => {
+        const e = new THREE.Group(); e.position.set(s * 1.25, 2.45, 0.3);
+        e.rotation.z = e.userData.rz = -s * 0.18; head.add(e);
+        addBlock(0, 0.3, 0, 1.3, 0.6, 0.7, C.fur, e);
+        addBlock(0, 0.85, 0, 1.0, 0.5, 0.6, C.fur, e);
+        addBlock(0, 1.3, 0, 0.7, 0.45, 0.5, C.fur, e);
+        addBlock(0, 1.7, 0, 0.4, 0.4, 0.4, C.tip, e);
+        addBlock(0, 0.4, -0.34, 0.8, 0.5, 0.1, C.ear, e);   // interior
+        addBlock(0, 0.9, -0.32, 0.5, 0.4, 0.1, C.ear, e);
+        addBlock(0, 1.3, -0.28, 0.25, 0.3, 0.1, C.ear, e);
+        return e;
+      });
+
+      // auriculares gamer
+      H(0, 2.78, -0.35, 3.9, 0.3, 0.6, C.dark);               // diadema
+      S.forEach(s => {
+        H(s * 2.0, 1.7, -0.35, 0.3, 2.0, 0.6, C.dark);        // varilla lateral
+        H(s * 2.4, 1.0, -0.3, 0.6, 1.6, 1.5, C.dark);         // almohadilla
+        H(s * 2.75, 1.0, -0.3, 0.1, 1.0, 1.0, C.cyan, true);  // placa luminosa
+      });
+      H(-2.4, 0.45, -1.6, 0.18, 0.18, 1.1, C.dark);           // micrófono
+      H(-1.55, 0.45, -2.06, 1.7, 0.18, 0.18, C.dark);
+      H(-0.7, 0.45, -2.06, 0.4, 0.4, 0.4, C.ear);
+
+      // --- Cola larga en S (curva de Bézier) ---
+      const tailSegs = [];
+      const bez = (t, a, b, c, d) => (1 - t) ** 3 * a + 3 * (1 - t) ** 2 * t * b + 3 * (1 - t) * t * t * c + t ** 3 * d;
+      const NT = 20;
+      for (let i = 0; i < NT; i++) {
+        const t = i / (NT - 1);
+        const x = bez(t, 1.2, 5.4, 3.0, 5.2), y = bez(t, 3.4, 3.0, 6.2, 9.0);
+        const size = 0.72 - t * 0.2;
+        const col = i >= NT - 3 ? C.furLight : (i % 4 === 3 ? C.furDark : C.fur);
+        const seg = addBlock(x, y, CZ + 1.1, size, size, size, col, cat);
+        seg.userData = { bx: x, bz: CZ + 1.1 };
+        tailSegs.push(seg);
+      }
+
+      // --- Animación de la gata (se llama desde animar) ---
+      function animarGata(t) {
+        // cada 10 s se voltea hacia la cámara unos 3 s y parpadea
+        const c = t % 10;
+        const giro = sm((c - 6) / 0.8) * (1 - sm((c - 8.6) / 0.8));
+        const haciaCamara = Math.atan2(Math.sin(Math.PI + theta), Math.cos(Math.PI + theta));
+        head.rotation.y = giro * haciaCamara + Math.sin(t * 0.6) * 0.18 * (1 - giro);
+        const guino = giro > 0.9 && (c % 1) > 0.85 ? 0.1 : 1;
+        ojos.forEach(o => { o.scale.y = guino; });
+
+        head.rotation.z = Math.sin(t * 0.9 + 1) * 0.03;
+        head.position.y = 7.2 + Math.sin(t * 1.6) * 0.05;
+        ears.forEach((e, i) => {
+          const tw = Math.max(0, Math.sin(t * 1.1 + i * 2.4) - 0.92) * 5;   // sacudida ocasional
+          e.rotation.z = e.userData.rz - Math.sign(e.userData.rz) * tw;
+        });
+        const typing = t > 0 && Math.sin(t * 0.5) > -0.4 ? 1 : 0;           // teclea a ratos
+        paws.forEach(p => { p.position.y = p.userData.y0 + typing * Math.max(0, Math.sin(t * 16 + p.userData.ph)) * 0.14; });
+        tailSegs.forEach((s, i) => {
+          const w = t * 2.2 - i * 0.45;
+          s.position.x = s.userData.bx + Math.sin(w) * i * 0.035;
+          s.position.z = s.userData.bz + Math.cos(w) * i * 0.02;
+        });
+      }
+
+      // ===== PANELES FLOTANTES =====
+      const ICONS = {
+        paw:  ["#.#.#", ".###.", "#####", "#####", ".###."],
+        fish: ["..###..#", "#######.", "##.####.", "#######.", "..###..#"],
+        pad:  [".#####.", "#.#.#.#", "#######", "##...##"],
+        chat: ["#####", "#...#", "#####", "..#.."],
+        face: ["#...#", "##.##", "#####", "#.#.#", "#####"],
+        head: [".###.", "#...#", "#...#", "##.##"]
+      };
+      const panels = [];
+      function makePanel(icon, x, y, z, w, h, rot, modulo) {
+        const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rot; g.userData.modulo = modulo; scene.add(g);
+        addBlock(0, 0, 0, w, h, 0.5, 0x5a4a7a, g);
+        const faceMat = new THREE.MeshStandardMaterial({ color: 0xffb0e0, emissive: 0xff8ac8, emissiveIntensity: .3, roughness: .6 });
+        const face = new THREE.Mesh(geo(w - 0.5, h - 0.5, 0.2), faceMat);
+        face.position.z = 0.2; face.receiveShadow = true; g.add(face);
+        const pat = ICONS[icon], cell = (w - 1.2) / pat[0].length, cellH = Math.min(cell, (h - 1.2) / pat.length);
+        pat.forEach((row, r) => [...row].forEach((ch, c) => {
+          if (ch === '#') addBlock(-((pat[0].length - 1) * cell) / 2 + c * cell, ((pat.length - 1) * cellH) / 2 - r * cellH, 0.4, cell * .95, cellH * .95, 0.2, 0x3a2a5a, g);
+        }));
+        addBlock(w / 2 - 0.45, h / 2 - 0.28, 0.32, 0.3, 0.18, 0.1, 0x7a3a9a, g);
+        panels.push({ g, faceMat, modulo, y0: y, ph: Math.random() * 6.28, rot0: rot });
+      }
+      // Las 4 de la derecha/centro abren secciones; las 2 de la izquierda son decorativas
+      makePanel('fish',  -1,   15.2, -7,   3.8, 4.4,  0.10, 'experiencia');
+      makePanel('pad',    6.5, 14.2, -7,   5,   3.4, -0.10, 'proyectos');
+      makePanel('chat',  10,   10.5, -3,   3.6, 3.6, -0.35, 'contacto');
+      makePanel('face',  10.5,  6.0,  0.5, 3.4, 4,   -0.50, 'sobre-mi');
+      makePanel('paw',   -9,   10.5, -3,   3.6, 3.6,  0.35);
+      makePanel('head', -10,    6.4,  0.5, 3.8, 3.4,  0.50);
+
+      // ===== PARTÍCULAS =====
+      const sparks = [];
+      for (let i = 0; i < 30; i++) {
+        const s = addBlock((Math.random() - .5) * 30, Math.random() * 18 + 1, (Math.random() - .5) * 22 - 2, .18, .18, .18, Math.random() > .5 ? 0xffb0e0 : 0xb48ae0, scene, true);
+        s.userData = { sp: Math.random() * .5 + .2, ph: Math.random() * 6.28 }; sparks.push(s);
+      }
+
+      // ===== ÓRBITA + PARALLAX + CLIC/HOVER EN LAS VENTANAS =====
+      const target = new THREE.Vector3(0, 7.5, -1);
+      let theta = 0.45, phi = 1.0, radius = 40, rMin = 20, rMax = 60, prevFit = 0;
+      let mx = 0, my = 0, px = 0, py = 0;   // mouse normalizado y su versión suavizada
+      const pts = new Map(); let pinch = 0, lx = 0, ly = 0, down = null, hover = null;
+      const cv = renderer.domElement;
+      cv.style.touchAction = 'none'; cv.style.cursor = 'grab'; cv.tabIndex = 0;
+      const clampR = r => Math.min(rMax, Math.max(rMin, r));
+
+      addEventListener('pointermove', e => {
+        if (e.pointerType !== 'mouse') return;
+        mx = e.clientX / innerWidth * 2 - 1;
+        my = e.clientY / innerHeight * 2 - 1;
+      });
+
+      const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+      const NOMBRES = { 'sobre-mi': 'Sobre mí', experiencia: 'Experiencia', proyectos: 'Proyectos', contacto: 'Contacto' };
+      const etiqueta = document.createElement('div');
+      etiqueta.className = 'etiqueta-3d'; etiqueta.hidden = true; caja.appendChild(etiqueta);
+
+      // Devuelve la ventana clicable bajo el puntero (o null)
+      function panelBajo(e) {
+        const r = cv.getBoundingClientRect();
+        ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+        ray.setFromCamera(ndc, camera);
+        const hit = ray.intersectObjects(panels.map(p => p.g), true)[0];
+        if (!hit) return null;
+        let o = hit.object; while (o && !o.userData.modulo && !panels.some(p => p.g === o)) o = o.parent;
+        return o ? panels.find(p => p.g === o) : null;
+      }
+
+      cv.addEventListener('pointerdown', e => {
+        pts.set(e.pointerId, e); lx = e.clientX; ly = e.clientY;
+        down = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing';
+      });
+      const soltar = e => {
+        // clic = soltar casi donde se presionó (si arrastró, no cuenta)
+        const clic = e.type === 'pointerup' && down && pts.size === 1 && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6;
+        pts.delete(e.pointerId); pinch = 0; down = null; cv.style.cursor = hover ? 'pointer' : 'grab';
+        if (clic) { const p = panelBajo(e); if (p && p.modulo) abrir(p.modulo, cv); }
+      };
+      cv.addEventListener('pointerup', soltar); cv.addEventListener('pointercancel', soltar);
+      cv.addEventListener('pointerleave', () => { if (!pts.size) { hover = null; etiqueta.hidden = true; } });
+      cv.addEventListener('pointermove', e => {
+        if (!pts.size && e.pointerType === 'mouse') {            // solo pasar el mouse
+          hover = panelBajo(e); cv.style.cursor = hover ? 'pointer' : 'grab';
+          etiqueta.hidden = !hover;
+          if (hover) {
+            const r = cv.getBoundingClientRect();
+            etiqueta.textContent = NOMBRES[hover.modulo] || 'Decorativo';
+            etiqueta.style.left = (e.clientX - r.left) + 'px'; etiqueta.style.top = (e.clientY - r.top) + 'px';
+          }
+          return;
+        }
+        if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, e);
+        if (pts.size === 2) { const [a, b] = [...pts.values()]; const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); if (pinch) radius = clampR(radius * pinch / d); pinch = d; return; }
+        if (hover) { hover = null; etiqueta.hidden = true; }
+        theta -= (e.clientX - lx) * 0.006; phi = Math.min(1.45, Math.max(0.35, phi - (e.clientY - ly) * 0.006));
+        lx = e.clientX; ly = e.clientY;
+      });
+      cv.addEventListener('wheel', e => { e.preventDefault(); radius = clampR(radius * (1 + e.deltaY * 0.001)); }, { passive: false });
+
+      // ===== AJUSTE AL TAMAÑO DE LA COLUMNA =====
+      function ajustar() {
+        const w = caja.clientWidth, h = caja.clientHeight; if (!w || !h) return;
+        renderer.setSize(w, h, false); camera.aspect = w / h;
+        // distancia para que quepan ancho (~26) y alto (~25) de la escena
+        const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
+        const fit = Math.max(12.5 / t, 13 / (t * camera.aspect));
+        const ratio = prevFit ? radius / prevFit : 1; // conserva el zoom del usuario al redimensionar
+        prevFit = fit; rMin = fit * 0.55; rMax = fit * 1.4; radius = clampR(fit * ratio);
+        const ancha = camera.aspect > 1.2;
+        camera.setViewOffset(w, h, ancha ? -w * 0.12 : 0, ancha ? 0 : -h * 0.10, w, h);
+        camera.updateProjectionMatrix();
+      }
+      new ResizeObserver(ajustar).observe(caja);
+      ajustar();
+
+      // ===== ANIMACIÓN =====
+      const clock = new THREE.Clock(), tmp = new THREE.Color();
+      const reducir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      function animar() {
+        requestAnimationFrame(animar);
+        if (panelAbierto) return;                                   // pausa mientras hay un panel abierto
+        const t = reducir ? 0 : clock.getElapsedTime();
+
+        panels.forEach(p => {
+          p.g.position.y = p.y0 + Math.sin(t * 1.2 + p.ph) * 0.5;
+          p.g.rotation.y = p.rot0 + Math.sin(t * .8 + p.ph) * 0.12;
+          const esc = p === hover ? 1.12 : 1;
+          p.g.scale.setScalar(p.g.scale.x + (esc - p.g.scale.x) * 0.2);
+          p.faceMat.emissiveIntensity = 0.3 + Math.sin(t * 3 + p.ph * 2) * 0.15 + (Math.sin(t * 11 + p.ph) > 0.95 ? 0.25 : 0) + (p === hover ? 0.4 : 0);
+        });
+
+        animarGata(t);
+        animarMonitor(t);
+
+        tmp.setHSL(0.88 + Math.sin(t * 0.7) * 0.05, 1, 0.8 + Math.sin(t * 1.3) * 0.05);
+        screen.material.color.copy(tmp); screenLight.color.copy(tmp);
+
+        // partículas que suben y titilan
+        sparks.forEach(s => {
+          if (!reducir) { s.position.y += s.userData.sp * 0.02; if (s.position.y > 19) s.position.y = 0.5; }
+          s.rotation.y = t * s.userData.sp;
+          s.rotation.x = t * s.userData.sp * 0.7;
+          s.scale.setScalar(0.75 + 0.25 * Math.sin(t * 3 + s.userData.ph));
+        });
+
+        // cámara viva: entrada, vaivén y parallax con el mouse
+        px += ((reducir ? 0 : mx) - px) * 0.05;
+        py += ((reducir ? 0 : my) - py) * 0.05;
+        const ease = reducir ? 1 : 1 - Math.pow(1 - Math.min(1, t / 2.6), 3);   // entrada de 2.6 s
+        const rr  = radius * (1 + (1 - ease) * 0.7);                              // arranca lejos y se acerca
+        const thA = theta + (1 - ease) * 1.2 + Math.sin(t * 0.35) * 0.10 + px * 0.18;
+        const phA = Math.min(1.45, Math.max(0.35, phi - py * 0.07 + Math.sin(t * 0.27) * 0.03));
+        camera.position.set(
+          target.x + rr * Math.sin(phA) * Math.sin(thA),
+          target.y + rr * Math.cos(phA),
+          target.z + rr * Math.sin(phA) * Math.cos(thA));
+        camera.lookAt(target);
+
+        renderer.render(scene, camera);
+      }
+      animar();
+    })();
+
+
+    /* =========================================================
+       PANELES (Sobre mí, Experiencia, Proyectos, Contacto)
+       ========================================================= */
+    const paneles = document.querySelectorAll('.panel');
+    const botones = document.querySelectorAll('.menu-btn');
+    let abiertoPor = null;
+
+    function abrir(id, boton) {
+      cerrar(false);
+      const panel = document.getElementById(id);
+      if (!panel) return;
+      abiertoPor = boton;
+      panel.hidden = false;
+      panelAbierto = true;
+      panel.querySelector('.panel-cerrar').focus();
+    }
+
+    function cerrar(devolverFoco = true) {
+      paneles.forEach(p => { p.hidden = true; });
+      panelAbierto = false;
+      if (devolverFoco && abiertoPor) abiertoPor.focus();
+      abiertoPor = null;
+    }
+
+    botones.forEach(b => b.addEventListener('click', () => abrir(b.dataset.panel, b)));
+    document.querySelectorAll('[data-abrir]').forEach(b => b.addEventListener('click', () => abrir(b.dataset.abrir, b)));
+
+    paneles.forEach(p => {
+      // Cerrar con la X o al hacer clic fuera de la tarjeta
+      p.addEventListener('click', e => {
+        if (e.target === p || e.target.closest('.panel-cerrar')) cerrar();
+      });
+    });
+
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') cerrar();
+    });
+
+
+    /* =========================================================
+       NOMBRE: efecto "máquina de escribir"
+       ========================================================= */
+    (function () {
+      const lns = document.querySelectorAll('.hero-text .ln');
+      const cursor = document.querySelector('.hero-text .cursor');
+      if (!lns.length || !cursor) return;
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      // guarda cada línea completa y vacía el texto (el lector de pantalla usa el aria-label del h1)
+      const lineas = [...lns].map(el => {
+        const nodo = el.firstChild;
+        const completo = nodo.textContent;
+        nodo.textContent = '';
+        return { el, nodo, completo };
+      });
+
+      let i = 0;
+      function escribir() {
+        if (i >= lineas.length) return;
+        const { el, nodo, completo } = lineas[i];
+        el.appendChild(cursor);              // el cursor "salta" a la línea que se escribe
+        let k = 0;
+        const id = setInterval(() => {
+          nodo.textContent = completo.slice(0, ++k);
+          if (k >= completo.length) {
+            clearInterval(id);
+            i++;
+            setTimeout(escribir, 250);
+          }
+        }, 90);
+      }
+
+      setTimeout(escribir, 600);
+    })();
+  </script>
+</body>
+</html>

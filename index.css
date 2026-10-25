@@ -4,22 +4,15 @@
     --texto: #f3e9ff;
     --texto-suave: #cdbfe6;
     --acento: #ff5fd2;
+    --acento-2: #3ff0ff; /* cian complementario */
     --alto-header: 60px;
-    --acento-2: #3ff0ff;
-    /* cian complementario */
 }
 
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
+* { margin: 0; padding: 0; box-sizing: border-box; }
 
-html,
-body {
+html, body {
     height: 100%;
-    overflow: hidden;
-    /* una sola pantalla, sin scroll */
+    overflow: hidden; /* una sola pantalla, sin scroll */
 }
 
 body {
@@ -28,9 +21,7 @@ body {
     color: var(--texto);
 }
 
-a {
-    text-decoration: none;
-}
+a { text-decoration: none; }
 
 a:focus-visible,
 button:focus-visible {
@@ -47,15 +38,28 @@ body header {
     align-items: center;
 }
 
-body header img {
-    height: 100%;
-    padding: 10px;
-}
+body header img { height: 100%; padding: 10px; }
+header .logo { height: 100%; display: block; }
 
-header .logo {
-    height: 100%;
-    display: block;
+/* Interruptor de vista: Presentación | Escena 3D (lo crea escena.js) */
+.vista-toggle {
+    margin-left: auto;
+    margin-right: 16px;
+    display: flex;
+    border: 2px solid var(--morado);
+    background: rgba(13, 6, 23, .6);
 }
+.vista-toggle button {
+    font: 400 10px 'Press Start 2P', monospace;
+    padding: 10px 14px;
+    color: var(--texto-suave);
+    background: none;
+    border: 0;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+}
+.vista-toggle button:hover:not([aria-pressed="true"]) { color: var(--acento); }
+.vista-toggle button[aria-pressed="true"] { background: var(--acento); color: #1a0630; }
 
 /* ---------- Main ---------- */
 main {
@@ -68,6 +72,12 @@ main {
     overflow: hidden;
 }
 
+.Presentacion {
+    background: linear-gradient(90deg, rgba(255, 95, 210, 0.911) 0%, rgba(107, 63, 160, 0.993) 100%);
+    height: 100%;
+    width: 100%;
+}
+
 main .overlay {
     position: absolute;
     inset: 0;
@@ -78,19 +88,67 @@ main .overlay {
         inset 0 0 100px rgba(255, 100, 200, 0.15);
     pointer-events: none;
     z-index: 1;
+    transition: background 1.4s ease;
 }
 
+/* ---------- Escena 3D (pantalla completa) ---------- */
+.hero-gato-caja {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    transition: opacity 1.4s ease, filter 1.4s ease;
+}
 
-
-.Presentacion {
-    background: linear-gradient(90deg, rgba(255, 95, 210, 0.911) 0%, rgba(107, 63, 160, 0.993) 100%);
-    height: 100%;
+.hero-gato-caja canvas {
+    position: absolute;
+    inset: 0;
     width: 100%;
+    height: 100%;
+    display: block;
 }
 
-/* Capas: fondo (1) < escena 3D (2) < texto (3) < paneles (10).
-   El texto no bloquea el mouse, así que se puede arrastrar/clicar el 3D por debajo. */
+/* Etiquetas bajo cada ventana flotante del 3D */
+.chip-3d {
+    position: absolute;
+    left: 0;
+    top: 0;
+    z-index: 4;
+    padding: 7px 9px;
+    font: 400 9px 'Press Start 2P', monospace;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--acento);
+    background: rgba(26, 6, 48, .88);
+    border: 2px solid var(--morado);
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity .3s, color .2s, background .2s, border-color .2s;
+}
+.chip-3d.activa { color: #fff; border-color: var(--acento); background: rgba(255, 95, 210, .3); }
+.chip-3d.pulsa { animation: pulsoChip 1.6s ease-in-out infinite; }
+@keyframes pulsoChip { 50% { box-shadow: 0 0 18px rgba(255, 95, 210, .85); border-color: var(--acento); } }
+
+.pista {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 14px;
+    z-index: 3;
+    text-align: center;
+    font-size: 13px;
+    color: var(--texto-suave);
+    text-shadow: 0 1px 8px rgba(13, 6, 23, .95);
+    pointer-events: none;
+    transition: opacity .8s;
+}
+
+/* ---------- Presentación (panel con zigzag) ----------
+   Capas: fondo (1) < escena 3D (2) < texto (3) < paneles (10).
+   En la vista "Presentación" el panel ocupa toda la pantalla; en la vista
+   "Escena 3D" se encoge a la barra lateral. Ambos clip-path tienen 9 puntos
+   para que la transición sea suave. */
 .hero {
+    --tw: min(38vw, 580px);                 /* ancho del bloque de texto */
     position: absolute;
     inset: 0;
     z-index: 3;
@@ -102,11 +160,14 @@ main .overlay {
     backdrop-filter: blur(20px);
     width: 35%;
     clip-path: polygon(0 0, 85% 0, 100% 15%, 85% 30%, 100% 50%, 85% 70%, 100% 85%, 85% 100%, 0 100%);
+    transition: width 1.1s cubic-bezier(.22, .8, .2, 1),
+                padding-left 1.1s cubic-bezier(.22, .8, .2, 1),
+                clip-path 1.1s cubic-bezier(.22, .8, .2, 1);
 }
 
 .hero-text {
-    pointer-events: none; 
-    width: min(38vw, 580px);
+    pointer-events: none;
+    width: var(--tw);
     container-type: inline-size;
     display: flex;
     flex-direction: column;
@@ -114,13 +175,15 @@ main .overlay {
     min-width: 0;
     text-shadow: 2px 2px 14px rgba(13, 6, 23, .95);
     z-index: 3;
+    transform-origin: center;
+    transition: transform 1.1s cubic-bezier(.22, .8, .2, 1);
 }
 
 .hero-text .acciones,
 .hero-text .redes,
 .hero-text a,
 .hero-text button {
-    pointer-events: auto;      /* los botones sí reciben clic */
+    pointer-events: auto; /* los botones sí reciben clic */
 }
 
 .saludo {
@@ -138,7 +201,6 @@ main .overlay {
     line-height: 1.15;
     text-transform: uppercase;
     text-wrap: balance;
-
     /* degradado rosa → cian */
     background: linear-gradient(90deg, var(--acento) 0%, #c77dff 55%, var(--acento-2) 100%);
     -webkit-background-clip: text;
@@ -158,12 +220,7 @@ main .overlay {
     vertical-align: -0.1em;
     animation: parpadeo 1s steps(2) infinite;
 }
-
-@keyframes parpadeo {
-    50% {
-        opacity: 0;
-    }
-}
+@keyframes parpadeo { 50% { opacity: 0; } }
 
 .frase {
     font-size: 20px;
@@ -172,13 +229,19 @@ main .overlay {
     color: #eadcff;
 }
 
-/* ---------- Botones de acción ---------- */
-.acciones {
+/* Etiquetas discretas */
+.etiquetas {
+    list-style: none;
     display: flex;
     flex-wrap: wrap;
-    gap: 14px;
-    margin-top: 4px;
+    gap: 8px 16px;
+    max-width: 600px;
 }
+.etiquetas li { font-size: 13px; color: #b9a3dc; padding: 0; border: 0; background: none; }
+.etiquetas li::before { content: "# "; color: var(--acento-2); }
+
+/* Botones de acción */
+.acciones { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 4px; }
 
 .btn {
     font-family: 'Press Start 2P', monospace;
@@ -197,7 +260,6 @@ main .overlay {
     box-shadow: 4px 4px 0 var(--acento), 0 0 24px rgba(63, 240, 255, .45);
     text-shadow: none;
 }
-
 .btn-primario:hover {
     transform: translate(-2px, -2px);
     box-shadow: 6px 6px 0 var(--acento), 0 0 32px rgba(63, 240, 255, .7);
@@ -209,79 +271,45 @@ main .overlay {
     border: 2px solid var(--acento);
     text-shadow: none;
 }
+.btn-secundario:hover { background: rgba(255, 95, 210, .15); box-shadow: 0 0 20px rgba(255, 95, 210, .5); }
 
-.btn-secundario:hover {
-    background: rgba(255, 95, 210, .15);
-    box-shadow: 0 0 20px rgba(255, 95, 210, .5);
-}
+/* Redes */
+.redes { display: flex; gap: 14px; }
+.redes a { color: var(--texto-suave); display: inline-flex; transition: color .2s; }
+.redes a:hover { color: var(--acento-2); }
 
-/* ---------- Etiquetas (ahora discretas) ---------- */
-.etiquetas {
-    list-style: none;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 16px;
-    max-width: 600px;
-}
-
-.etiquetas li {
-    font-size: 13px;
-    color: #b9a3dc;
-    padding: 0;
-    border: 0;
-    background: none;
-}
-
-.etiquetas li::before {
-    content: "# ";
-    color: var(--acento-2);
-}
-
-
-/* ---------- Escena 3D (pantalla completa) ---------- */
-.hero-gato-caja {
-    position: absolute;
-    inset: 0;
-    z-index: 2;
-}
-
-.hero-gato-caja canvas {
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    display: block;
-    z-index: 2;
-}
-
-/* Etiqueta que sigue al mouse al pasar sobre una ventana */
-.etiqueta-3d {
-    position: absolute;
-    z-index: 4;
-    transform: translate(14px, -38px);
-    padding: 7px 10px;
-    font: 400 10px 'Press Start 2P', monospace;
-    color: var(--acento);
-    background: rgba(26, 6, 48, .92);
+/* Botón "Explorar mi mundo" (lo crea escena.js al terminar de escribirse el nombre) */
+.btn-entrar {
+    align-self: flex-start;
+    margin-top: 10px;
+    padding: 15px 26px;
+    font: 400 13px 'Press Start 2P', monospace;
+    color: #1a0630;
+    background: var(--acento);
     border: 2px solid var(--acento);
-    white-space: nowrap;
-    pointer-events: none;
+    cursor: pointer;
+    text-shadow: none;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity .6s, transform .6s, background .2s;
+    animation: latido 1.6s ease-in-out infinite;
 }
+.btn-entrar.visible { opacity: 1; transform: none; }
+.btn-entrar:hover { background: #ff86e0; }
+@keyframes latido { 50% { box-shadow: 0 0 22px rgba(255, 95, 210, .85); } }
 
-.pista {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 14px;
-    z-index: 3;
-    text-align: center;
-    font-size: 13px;
-    color: var(--texto-suave);
-    text-shadow: 0 1px 8px rgba(13, 6, 23, .95);
-    pointer-events: none;
+/* ---------- Vista "Presentación": texto a pantalla completa, escena en espera ---------- */
+.fase-intro .hero {
+    width: 100%;
+    padding-left: calc(50vw - var(--tw) / 2);   /* bloque de texto centrado */
+    clip-path: polygon(0 0, 100% 0, 100% 15%, 100% 30%, 100% 50%, 100% 70%, 100% 85%, 100% 100%, 0 100%);
 }
+.fase-intro .hero-text { transform: scale(1.12); }
+.fase-intro .hero-gato-caja { opacity: 0; filter: blur(14px); pointer-events: none; }
+.fase-intro main .overlay { background: rgba(13, 6, 23, .86); }
+.fase-intro .pista { opacity: 0; }
 
-/* Botones solo para teclado / lector de pantalla: ocultos hasta recibir foco */
+/* ---------- Teclado / lector de pantalla: botones ocultos hasta recibir foco ---------- */
 .menu {
     position: absolute;
     left: 50%;
@@ -296,14 +324,7 @@ main .overlay {
     clip-path: inset(50%);
     white-space: nowrap;
 }
-
-.menu:focus-within {
-    width: auto;
-    height: auto;
-    overflow: visible;
-    clip-path: none;
-}
-
+.menu:focus-within { width: auto; height: auto; overflow: visible; clip-path: none; }
 .menu-btn {
     font: 500 15px 'Space Grotesk', sans-serif;
     padding: 12px 18px;
@@ -312,11 +333,7 @@ main .overlay {
     border: 2px solid var(--morado);
     cursor: pointer;
 }
-
-.menu-btn:hover {
-    border-color: var(--acento);
-    color: var(--acento);
-}
+.menu-btn:hover { border-color: var(--acento); color: var(--acento); }
 
 /* ---------- Paneles por encima ---------- */
 .panel {
@@ -331,18 +348,14 @@ main .overlay {
     backdrop-filter: blur(6px);
     animation: aparece .25s ease-out;
 }
-
-.panel[hidden] {
-    display: none;
-}
+.panel[hidden] { display: none; }
 
 .panel-card {
     position: relative;
     width: 100%;
     max-width: 720px;
     max-height: 100%;
-    overflow-y: auto;
-    /* si el contenido es largo, se desplaza dentro del panel */
+    overflow-y: auto; /* si el contenido es largo, se desplaza dentro del panel */
     padding: 40px;
     background: #1a0b2e;
     border: 2px solid var(--morado);
@@ -353,18 +366,8 @@ main .overlay {
     animation: sube .3s ease-out;
 }
 
-@keyframes aparece {
-    from {
-        opacity: 0;
-    }
-}
-
-@keyframes sube {
-    from {
-        transform: translateY(24px);
-        opacity: 0;
-    }
-}
+@keyframes aparece { from { opacity: 0; } }
+@keyframes sube { from { transform: translateY(24px); opacity: 0; } }
 
 .panel-card h2 {
     font-family: 'Press Start 2P', monospace;
@@ -375,12 +378,7 @@ main .overlay {
     padding-right: 40px;
 }
 
-.panel-card p {
-    font-size: 18px;
-    line-height: 1.6;
-    color: var(--texto);
-    max-width: 62ch;
-}
+.panel-card p { font-size: 18px; line-height: 1.6; color: var(--texto); max-width: 62ch; }
 
 .panel-cerrar {
     position: absolute;
@@ -396,90 +394,27 @@ main .overlay {
     cursor: pointer;
     transition: color .2s, border-color .2s;
 }
-
-.panel-cerrar:hover {
-    color: var(--acento);
-    border-color: var(--acento);
-}
+.panel-cerrar:hover { color: var(--acento); border-color: var(--acento); }
 
 /* Experiencia */
-.linea {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 22px;
-}
-
-.linea li {
-    padding-left: 18px;
-    border-left: 3px solid var(--morado);
-}
-
-.fecha {
-    font-size: 14px;
-    color: var(--texto-suave);
-}
-
-.linea h3,
-.proyecto h3 {
-    font-size: 20px;
-    color: var(--texto);
-    margin: 4px 0;
-}
-
-.linea p {
-    font-size: 16px;
-}
+.linea { list-style: none; display: flex; flex-direction: column; gap: 22px; }
+.linea li { padding-left: 18px; border-left: 3px solid var(--morado); }
+.fecha { font-size: 14px; color: var(--texto-suave); }
+.linea h3, .proyecto h3 { font-size: 20px; color: var(--texto); margin: 4px 0; }
+.linea p { font-size: 16px; }
 
 /* Proyectos */
-.rejilla {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
-    gap: 16px;
-}
-
-.proyecto {
-    display: block;
-    padding: 20px;
-    border: 2px solid var(--morado);
-    transition: border-color .2s, background .2s;
-}
-
-.proyecto:hover {
-    border-color: var(--acento);
-    background: rgba(255, 95, 210, 0.08);
-}
-
-.proyecto p {
-    font-size: 15px;
-    color: var(--texto-suave);
-}
+.rejilla { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; }
+.proyecto { display: block; padding: 20px; border: 2px solid var(--morado); transition: border-color .2s, background .2s; }
+.proyecto:hover { border-color: var(--acento); background: rgba(255, 95, 210, 0.08); }
+.proyecto p { font-size: 15px; color: var(--texto-suave); }
 
 /* Contacto */
-.enlaces {
-    list-style: none;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
+.enlaces { list-style: none; display: flex; flex-direction: column; gap: 10px; }
+.enlaces a { font-size: 18px; color: var(--texto-suave); border-bottom: 1px solid var(--morado); }
+.enlaces a:hover { color: var(--acento); border-color: var(--acento); }
 
-.enlaces a {
-    font-size: 18px;
-    color: var(--texto-suave);
-    border-bottom: 1px solid var(--morado);
-}
-
-.enlaces a:hover {
-    color: var(--acento);
-    border-color: var(--acento);
-}
-
-.btn {
-    align-self: flex-start;
-    display: inline-block;
-    padding: 15px 28px;
-    font-size: 16px;
-}
+.btn { align-self: flex-start; display: inline-block; padding: 15px 28px; font-size: 16px; }
 
 .btn-principal {
     background: var(--acento);
@@ -488,74 +423,49 @@ main .overlay {
     border: 2px solid var(--acento);
     transition: background .2s;
 }
-
-.btn-principal:hover {
-    background: #ff86e0;
-}
+.btn-principal:hover { background: #ff86e0; }
 
 /* ---------- Tablet ---------- */
 @media (max-width: 1100px) {
-    .hero {
-        padding: 24px 32px;
-    }
-
-    .hero-text {
-        width: min(44vw, 460px);
-    }
+    .hero { --tw: min(44vw, 460px); width: 46%; padding: 24px 32px; }
 }
 
-/* ---------- Móvil: el texto va arriba y la escena queda detrás, más abajo ---------- */
+/* ---------- Móvil: sin barra lateral; el texto va arriba sobre un degradado ---------- */
 @media (max-width: 700px) {
     .hero {
+        --tw: 100%;
+        width: 100%;
         align-items: flex-start;
         padding: 20px 20px 16px;
+        clip-path: none;
+        background: none;
+        backdrop-filter: none;
     }
+    .hero::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: linear-gradient(180deg, rgba(13, 6, 23, .9) 0%, rgba(13, 6, 23, .55) 50%, transparent 78%);
+    }
+    .fase-intro .hero { padding-left: 20px; align-items: center; clip-path: none; }
+    .fase-intro .hero-text { transform: none; }
 
-    .hero-text {
-        width: 100%;
-        gap: 12px;
-    }
+    .hero-text { gap: 12px; }
+    .saludo { font-size: 15px; }
+    .frase { font-size: 16px; }
+    .etiquetas { gap: 6px; }
+    .etiquetas li { font-size: 12px; padding: 5px 8px; }
+    .pista { font-size: 12px; bottom: 10px; }
+    .vista-toggle { margin-right: 8px; }
+    .vista-toggle button { font-size: 8px; padding: 8px 9px; }
 
-    .saludo {
-        font-size: 15px;
-    }
-
-    .frase {
-        font-size: 16px;
-    }
-
-    .etiquetas {
-        gap: 6px;
-    }
-
-    .etiquetas li {
-        font-size: 12px;
-        padding: 5px 8px;
-    }
-
-    .pista {
-        font-size: 12px;
-        bottom: 10px;
-    }
-
-    .panel {
-        padding: 16px;
-    }
-
-    .panel-card {
-        padding: 28px 22px;
-    }
+    .panel { padding: 16px; }
+    .panel-card { padding: 28px 22px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-
-    .cursor,
-    .panel,
-    .panel-card {
-        animation: none;
-    }
-
-    .menu-btn {
-        transition: none;
-    }
+    .cursor, .panel, .panel-card, .btn-entrar, .chip-3d.pulsa { animation: none; }
+    .menu-btn, .btn-entrar { transition: none; }
+    .hero, .hero-text, .hero-gato-caja, main .overlay { transition: none; }
 }

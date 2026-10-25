@@ -1,4 +1,7 @@
-
+/* =========================================================
+   Escena 3D voxel (Three.js r128) para el hero del portafolio
+   Se dibuja dentro de <div id="escena-3d" class="hero-gato-caja">
+   ========================================================= */
 (function () {
   const caja = document.getElementById('escena-3d');
   if (!caja || !window.THREE) return;
@@ -217,7 +220,7 @@
     });
   }
 
-  // ===== PANELES FLOTANTES =====
+  // ===== PANELES FLOTANTES (más juntos para caber en la columna) =====
   const ICONS = {
     paw:  ["#.#.#", ".###.", "#####", "#####", ".###."],
     fish: ["..###..#", "#######.", "##.####.", "#######.", "..###..#"],
@@ -238,11 +241,11 @@
       if (ch === '#') addBlock(-((pat[0].length - 1) * px) / 2 + c * px, ((pat.length - 1) * ph) / 2 - r * ph, 0.4, px * .95, ph * .95, 0.2, 0x3a2a5a, g);
     }));
     addBlock(w / 2 - 0.45, h / 2 - 0.28, 0.32, 0.3, 0.18, 0.1, 0x7a3a9a, g);
-    panels.push({ g, faceMat, modulo, y0: y, ph: Math.random() * 6.28, rot0: rot });
+    panels.push({ g, faceMat, modulo, alto: h, y0: y, ph: Math.random() * 6.28, rot0: rot });
   }
   // Las 4 de la derecha/centro abren secciones; las 2 de la izquierda son decorativas
-  makePanel('fish',  -1,   15.2, -7,   3.8, 4.4,  0.10, 'experiencia');
-  makePanel('pad',    6.5, 14.2, -7,   5,   3.4, -0.10, 'proyectos');
+  makePanel('fish',  -1,   14.2, -7,   3.8, 4.4,  0.10, 'experiencia');
+  makePanel('pad',    6.5, 13.8, -7,   5,   3.4, -0.10, 'proyectos');
   makePanel('chat',  10,   10.5, -3,   3.6, 3.6, -0.35, 'contacto');
   makePanel('face',  10.5,  6.0,  0.5, 3.4, 4,   -0.50, 'sobre-mi');
   makePanel('paw',   -9,   10.5, -3,   3.6, 3.6,  0.35);
@@ -255,20 +258,46 @@
     s.userData = { sp: Math.random() * .5 + .2, ph: Math.random() * 6.28 }; sparks.push(s);
   }
 
-  // ===== ÓRBITA + CLIC/HOVER EN LAS VENTANAS =====
+  // ===== ESTADO, ÓRBITA Y CLIC EN LAS VENTANAS =====
   const target = new THREE.Vector3(0, 7.5, -1);
   let theta = 0.45, phi = 1.0, radius = 40, rMin = 20, rMax = 60, prevFit = 0;
   const pts = new Map(); let pinch = 0, lx = 0, ly = 0, down = null, hover = null;
+  // estado: idle (libre) -> ida (cámara vuela a la ventana) -> abierto (panel) -> vuelta -> idle
+  let estado = 'idle', vuelo = null, guardado = null, panelAbierto = false, primeraVez = true;
   const cv = renderer.domElement;
   cv.style.touchAction = 'none'; cv.style.cursor = 'grab'; cv.tabIndex = 0;
   const clampR = r => Math.min(rMax, Math.max(rMin, r));
+  const NOMBRES = { 'sobre-mi': 'Sobre mí', experiencia: 'Experiencia', proyectos: 'Proyectos', contacto: 'Contacto' };
+
+  // Etiquetas siempre visibles bajo cada ventana clicable
+  const chips = panels.filter(p => p.modulo).map(p => {
+    const d = document.createElement('div'); d.className = 'chip-3d'; d.textContent = '▸ ' + NOMBRES[p.modulo];
+    caja.appendChild(d); return { p, d };
+  });
+
+  // Vuelo suave de cámara
+  const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+  const camPose = () => ({ theta, phi, radius, tx: target.x, ty: target.y, tz: target.z });
+  function volarA(pose, dur, fin) {
+    let dth = pose.theta - theta; dth = ((dth + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+    vuelo = { t0: clock.getElapsedTime(), dur, de: camPose(), a: pose, dth, fin };
+  }
+  function irA(p) {
+    guardado = camPose(); estado = 'ida'; hover = null; primeraVez = false;
+    volarA({ theta: p.rot0, phi: 1.3, radius: prevFit * 0.42, tx: p.g.position.x, ty: p.y0, tz: p.g.position.z }, 0.8,
+      () => { estado = 'abierto'; if (window.abrir) window.abrir(p.modulo, cv); });
+  }
+  // Detecta cuándo se abre/cierra un panel (index.js sólo usa el atributo hidden)
+  function comprobar() {
+    panelAbierto = !!document.querySelector('.panel:not([hidden])');
+    if (panelAbierto) { primeraVez = false; if (estado === 'idle') { estado = 'abierto'; guardado = null; } }
+    else if (estado === 'abierto') {
+      if (guardado) { estado = 'vuelta'; volarA(guardado, 0.65, () => { estado = 'idle'; }); } else estado = 'idle';
+    }
+  }
+  new MutationObserver(comprobar).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
 
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
-  const NOMBRES = { 'sobre-mi': 'Sobre mí', experiencia: 'Experiencia', proyectos: 'Proyectos', contacto: 'Contacto' };
-  const etiqueta = document.createElement('div');
-  etiqueta.className = 'etiqueta-3d'; etiqueta.hidden = true; caja.appendChild(etiqueta);
-
-  // Devuelve la ventana clicable bajo el puntero (o null)
   function panelBajo(e) {
     const r = cv.getBoundingClientRect();
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
@@ -280,35 +309,27 @@
   }
 
   cv.addEventListener('pointerdown', e => {
+    if (estado !== 'idle') return;
     pts.set(e.pointerId, e); lx = e.clientX; ly = e.clientY;
     down = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing';
   });
   const soltar = e => {
-    // clic = soltar casi donde se presionó (si arrastró, no cuenta)
     const clic = e.type === 'pointerup' && down && pts.size === 1 && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6;
     pts.delete(e.pointerId); pinch = 0; down = null; cv.style.cursor = hover ? 'pointer' : 'grab';
-    if (clic) { const p = panelBajo(e); if (p && window.abrir) window.abrir(p.modulo, cv); }
+    if (clic && estado === 'idle') { const p = panelBajo(e); if (p) irA(p); }
   };
   cv.addEventListener('pointerup', soltar); cv.addEventListener('pointercancel', soltar);
-  cv.addEventListener('pointerleave', () => { if (!pts.size) { hover = null; etiqueta.hidden = true; } });
+  cv.addEventListener('pointerleave', () => { if (!pts.size) hover = null; });
   cv.addEventListener('pointermove', e => {
-    if (!pts.size && e.pointerType === 'mouse') {            // solo pasar el mouse
-      hover = panelBajo(e); cv.style.cursor = hover ? 'pointer' : 'grab';
-      etiqueta.hidden = !hover;
-      if (hover) {
-        const r = cv.getBoundingClientRect();
-        etiqueta.textContent = NOMBRES[hover.modulo] || 'Decorativo';
-        etiqueta.style.left = (e.clientX - r.left) + 'px'; etiqueta.style.top = (e.clientY - r.top) + 'px';
-      }
-      return;
-    }
+    if (estado !== 'idle') return;
+    if (!pts.size && e.pointerType === 'mouse') { hover = panelBajo(e); cv.style.cursor = hover ? 'pointer' : 'grab'; return; }
     if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, e);
     if (pts.size === 2) { const [a, b] = [...pts.values()]; const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); if (pinch) radius = clampR(radius * pinch / d); pinch = d; return; }
-    if (hover) { hover = null; etiqueta.hidden = true; }
+    hover = null;
     theta -= (e.clientX - lx) * 0.006; phi = Math.min(1.45, Math.max(0.35, phi - (e.clientY - ly) * 0.006));
     lx = e.clientX; ly = e.clientY;
   });
-  cv.addEventListener('wheel', e => { e.preventDefault(); radius = clampR(radius * (1 + e.deltaY * 0.001)); }, { passive: false });
+  cv.addEventListener('wheel', e => { e.preventDefault(); if (estado === 'idle') radius = clampR(radius * (1 + e.deltaY * 0.001)); }, { passive: false });
 
   // ===== AJUSTE AL TAMAÑO DE LA COLUMNA =====
   function ajustar() {
@@ -316,7 +337,7 @@
     renderer.setSize(w, h, false); camera.aspect = w / h;
     // distancia para que quepan ancho (~26) y alto (~21) de la escena
     const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const fit = Math.max(10.5 / t, 13 / (t * camera.aspect));
+    const fit = Math.max(11.5 / t, 14 / (t * camera.aspect));
     const ratio = prevFit ? radius / prevFit : 1; // conserva el zoom del usuario al redimensionar
     prevFit = fit; rMin = fit * 0.55; rMax = fit * 1.4; radius = clampR(fit * ratio);
     const ancha = camera.aspect > 1.2;
@@ -327,12 +348,37 @@
   ajustar();
 
   // ===== ANIMACIÓN =====
-  const clock = new THREE.Clock(), tmp = new THREE.Color();
+  const clock = new THREE.Clock(), tmp = new THREE.Color(), v3 = new THREE.Vector3();
   const reducir = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Entrada: los bloques "se construyen" de abajo hacia arriba
+  // FASES: 'intro' (se presenta el texto, la escena espera oculta) -> 'escena' (el 3D es el protagonista)
+  let fase = 'intro', introT0 = 0;
+  document.body.classList.add('fase-intro');
+  const intro = []; let introListo = reducir;
+  if (!reducir) scene.traverse(o => {
+    if (o.isMesh) { o.getWorldPosition(v3); intro.push({ o, d: Math.max(0, v3.y) * 0.07 + Math.random() * 0.25 }); o.scale.setScalar(0.0001); }
+  });
+  const backOut = x => 1 + 2.70158 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2);
+
   function animar() {
     requestAnimationFrame(animar);
-    if (document.querySelector('.panel:not([hidden])')) return; // pausa mientras hay un panel abierto
-    const t = reducir ? 0 : clock.getElapsedTime();
+    if (fase === 'intro') return;                    // la escena espera mientras se presenta el texto
+    if (panelAbierto && !vuelo) return;              // ahorro: pausa con el panel abierto
+    const te = clock.getElapsedTime(), t = reducir ? 0 : te;
+
+    if (vuelo) {                                      // vuelo de cámara
+      const k = Math.min(1, (te - vuelo.t0) / vuelo.dur), e = ease(k), d = vuelo.de, a = vuelo.a;
+      theta = d.theta + vuelo.dth * e; phi = d.phi + (a.phi - d.phi) * e; radius = d.radius + (a.radius - d.radius) * e;
+      target.set(d.tx + (a.tx - d.tx) * e, d.ty + (a.ty - d.ty) * e, d.tz + (a.tz - d.tz) * e);
+      if (k >= 1) { const f = vuelo.fin; vuelo = null; if (f) f(); }
+    }
+    if (!introListo) {
+      let fin = true;
+      intro.forEach(i => { const k = Math.min(1, Math.max(0, (te - introT0 - i.d) / 0.45)); if (k < 1) fin = false; i.o.scale.setScalar(Math.max(k === 0 ? 0 : backOut(k), 0.0001)); });
+      introListo = fin;
+    }
+
     panels.forEach(p => {
       p.g.position.y = p.y0 + Math.sin(t * 1.2 + p.ph) * 0.5;
       p.g.rotation.y = p.rot0 + Math.sin(t * .8 + p.ph) * 0.12;
@@ -340,17 +386,75 @@
       p.g.scale.setScalar(p.g.scale.x + (esc - p.g.scale.x) * 0.2);
       p.faceMat.emissiveIntensity = 0.3 + Math.sin(t * 3 + p.ph * 2) * 0.15 + (Math.sin(t * 11 + p.ph) > 0.95 ? 0.25 : 0) + (p === hover ? 0.4 : 0);
     });
-    animarGata(t);
+
+    // etiquetas pegadas a cada ventana
+    const W = caja.clientWidth, H = caja.clientHeight, visible = estado === 'idle' && !panelAbierto && introListo;
+    chips.forEach(({ p, d }) => {
+      v3.copy(p.g.position); v3.y -= p.alto / 2 + 0.9; v3.project(camera);
+      d.style.transform = `translate(${(v3.x * .5 + .5) * W}px, ${(-v3.y * .5 + .5) * H}px) translate(-50%, 0)`;
+      d.style.opacity = visible ? '1' : '0';
+      d.classList.toggle('activa', p === hover); d.classList.toggle('pulsa', primeraVez && !reducir);
+    });
+
+    animarGata(t);                                    // la gata: exactamente tu animación
+
     tmp.setHSL(0.88 + Math.sin(t * 0.7) * 0.05, 1, 0.8 + Math.sin(t * 1.3) * 0.05);
     screen.material.color.copy(tmp); screenLight.color.copy(tmp);
     sparks.forEach(s => { s.position.y += Math.sin(t * s.userData.sp * 3 + s.userData.ph) * 0.008; s.rotation.y = t * s.userData.sp; });
+
+    const balanceo = (estado === 'idle' && !pts.size && !reducir) ? Math.sin(te * 0.35) * 0.06 : 0; // vaivén suave
+    const th = theta + balanceo;
     camera.position.set(
-      target.x + radius * Math.sin(phi) * Math.sin(theta),
+      target.x + radius * Math.sin(phi) * Math.sin(th),
       target.y + radius * Math.cos(phi),
-      target.z + radius * Math.sin(phi) * Math.cos(theta));
+      target.z + radius * Math.sin(phi) * Math.cos(th));
     camera.lookAt(target);
     renderer.render(scene, camera);
   }
+  // Paso de la presentación a la escena: los bloques se construyen y la cámara hace una entrada en arco
+  function entrarEscena() {
+    if (fase === 'escena') return;
+    fase = 'escena'; sincronizarToggle();
+    document.querySelector('.btn-entrar')?.remove();
+    document.body.classList.remove('fase-intro'); document.body.classList.add('fase-escena');
+    introT0 = clock.getElapsedTime();
+    if (reducir) { estado = 'idle'; return; }
+    const destino = camPose();
+    theta += 0.9; radius = destino.radius * 1.3; estado = 'entrada';
+    volarA(destino, 2.2, () => { estado = 'idle'; });
+  }
+  // Volver a la presentación (clic en el logo)
+  function volverAIntro() {
+    if (fase === 'intro') return;
+    if (typeof cerrar === 'function') cerrar(false);
+    vuelo = null;
+    if (guardado) { theta = guardado.theta; phi = guardado.phi; radius = guardado.radius; target.set(guardado.tx, guardado.ty, guardado.tz); }
+    guardado = null; estado = 'idle'; panelAbierto = false; hover = null;
+    fase = 'intro'; sincronizarToggle();
+    document.body.classList.remove('fase-escena'); document.body.classList.add('fase-intro');
+    presentacionLista(false);
+  }
+  window.entrarEscena = entrarEscena; window.volverAIntro = volverAIntro;
+
+  // Interruptor de vista en el header: Presentación <-> Escena 3D
+  const header = document.querySelector('body > header');
+  let toggle = null;
+  if (header) {
+    toggle = document.createElement('div');
+    toggle.className = 'vista-toggle'; toggle.setAttribute('role', 'group'); toggle.setAttribute('aria-label', 'Cambiar de vista');
+    toggle.innerHTML = '<button type="button" data-vista="intro">Presentación</button><button type="button" data-vista="escena">Escena 3D</button>';
+    header.appendChild(toggle);
+    toggle.addEventListener('click', e => {
+      const b = e.target.closest('button'); if (!b) return;
+      if (b.dataset.vista === 'escena') entrarEscena(); else volverAIntro();
+    });
+  }
+  function sincronizarToggle() {
+    if (toggle) toggle.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vista === fase)));
+  }
+  sincronizarToggle();
+
+
   animar();
 })();
 
@@ -394,8 +498,8 @@ document.addEventListener('keydown', e => {
 (function () {
   const h1s = document.querySelectorAll('.hero-text h1');
   const cursor = document.querySelector('.hero-text .cursor');
-  if (!h1s.length || !cursor) return;
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (!h1s.length || !cursor) { setTimeout(() => presentacionLista(false), 300); return; }
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { setTimeout(() => presentacionLista(false), 300); return; }
  
   // guarda cada nombre completo y vacía el texto (el lector de pantalla lo lee por aria-label)
   const lineas = [...h1s].map(h => {
@@ -408,7 +512,7 @@ document.addEventListener('keydown', e => {
  
   let i = 0;
   function escribir() {
-    if (i >= lineas.length) return;
+    if (i >= lineas.length) { setTimeout(() => presentacionLista(false), 400); return; }
     const { h, nodo, completo } = lineas[i];
     h.appendChild(cursor);                 // el cursor "salta" a la línea que se escribe
     let k = 0;
@@ -424,3 +528,29 @@ document.addEventListener('keydown', e => {
  
   setTimeout(escribir, 600);
 })();
+
+
+/* =========================================================
+   Presentación -> escena 3D
+   Al terminar de escribirse el nombre aparece "Explorar mi mundo"
+   (si nadie lo pulsa, entra solo a los 5,5 s). El logo vuelve a la presentación.
+   ========================================================= */
+function presentacionLista(auto) {
+  if (document.body.classList.contains('fase-escena')) return;   // ya estás en la escena
+  const cont = document.querySelector('.hero-text');
+  if (!cont || !window.entrarEscena) { if (window.entrarEscena) entrarEscena(); return; }
+  if (cont.querySelector('.btn-entrar')) return;
+  const b = document.createElement('button');
+  b.type = 'button'; b.className = 'btn-entrar';
+  b.innerHTML = 'Explorar mi mundo <span aria-hidden="true">▸</span>';
+  cont.appendChild(b);
+  requestAnimationFrame(() => requestAnimationFrame(() => b.classList.add('visible')));
+  let id = null;
+  const ir = () => { clearTimeout(id); b.remove(); entrarEscena(); };
+  b.addEventListener('click', ir);
+  if (auto) id = setTimeout(ir, 5500);
+}
+
+document.querySelector('.logo')?.addEventListener('click', e => {
+  e.preventDefault(); if (window.volverAIntro) volverAIntro();
+});
