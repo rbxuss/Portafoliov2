@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Julian Andrés Carvajalino Quintero | Desarrollador Web</title>
+    <meta name="description"
+      content="Portafolio de Julian Carvajalino: experiencias web interactivas con 3D y datos.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -11,22 +13,43 @@
       rel="stylesheet">
     <link rel="stylesheet" href="index.css">
   </head>
+
   <body>
     <header>
-      <a href="#" class="logo"><img
-          src="https://i.ibb.co/m5TYHz9v/image-removebg-preview.png"
-          alt="Logo de Julian"></a>
+      <a href="#" class="logo" aria-label="Inicio">
+        <img src="https://i.ibb.co/m5TYHz9v/image-removebg-preview.png"
+          alt="Logo de Julian">
+      </a>
+
+      <!-- Menú visible: abre los mismos paneles que las ventanas del 3D -->
+      <nav class="nav-principal" aria-label="Secciones del portafolio">
+        <button type="button" data-abrir="sobre-mi" aria-haspopup="dialog">Sobre
+          mí</button>
+        <button type="button" data-abrir="experiencia"
+          aria-haspopup="dialog">Experiencia</button>
+        <button type="button" data-abrir="proyectos"
+          aria-haspopup="dialog">Proyectos</button>
+        <button type="button" data-abrir="contacto"
+          aria-haspopup="dialog">Contacto</button>
+      </nav>
     </header>
+
     <main>
       <section class="Presentacion">
+
+        <!-- ========== TEXTO ========== -->
         <section class="hero">
           <div class="hero-text">
             <p class="saludo">&gt; Hola, soy</p>
 
-            <h1>Julian</h1>
-            <h1>Carvajalino<span class="cursor" aria-hidden="true"></span></h1>
-            <p class="frase">Creo experiencias web interactivas con 3D y
-              datos.</p>
+            <h1 aria-label="Julian Carvajalino">
+              <span class="ln">Julian</span>
+              <span class="ln">Carvajalino<span class="cursor"
+                  aria-hidden="true"></span></span>
+            </h1>
+
+            <p class="frase">Creo experiencias web interactivas con
+              <strong>3D</strong> y <strong>datos</strong>.</p>
 
             <ul class="etiquetas">
               <li>Desarrollador Web Junior</li>
@@ -34,66 +57,86 @@
               <li>Interfaces Creativas</li>
               <li>Automatización de Análisis</li>
             </ul>
+
             <div class="acciones">
-              <a href="/cv.pdf" download class="btn btn-primario">Descargar
+              <button type="button" class="btn btn-primario"
+                data-abrir="proyectos" aria-haspopup="dialog">Ver
+                proyectos</button>
+              <a href="cv.pdf" download class="btn btn-secundario">Descargar
                 CV</a>
-              <a href="#contacto" class="btn btn-secundario">Contáctame</a>
             </div>
 
             <div class="redes">
               <a href="https://github.com/TU-USUARIO" aria-label="GitHub"
                 target="_blank" rel="noopener">
-                <img src="https://i.ibb.co/0j1Z7gM/github.png" alt width="28"
-                  height="28">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" aria-hidden="true">
+                  <path
+                    d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22" />
+                </svg>
               </a>
               <a href="https://linkedin.com/in/TU-USUARIO" aria-label="LinkedIn"
                 target="_blank" rel="noopener">
-                <img src="https://i.ibb.co/3y6k5qH/linkedin.png" alt width="28"
-                  height="28">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round"
+                  stroke-linejoin="round" aria-hidden="true">
+                  <path
+                    d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                  <rect x="2" y="9" width="4" height="12" />
+                  <circle cx="4" cy="4" r="2" />
+                </svg>
               </a>
             </div>
-          </section>
-          <section>
-            <div class="overlay"></div>
-
-            <!-- Escena 3D a pantalla completa (fondo). Se dibuja con escena.js -->
-            <div id="escena-3d" class="hero-gato-caja" role="img"
-              aria-label="Escena 3D de bloques: gata gamer frente a un escritorio. Haz clic en las ventanas flotantes para abrir cada sección."></div>
           </div>
-
         </section>
 
-        <!-- Acceso por teclado / lector de pantalla (oculto a la vista; se muestra al enfocar con Tab).
-         Con el mouse se abren haciendo clic en las ventanas flotantes del 3D. -->
-        <nav class="menu" aria-label="Secciones del portafolio">
-          <button type="button" class="menu-btn" data-panel="sobre-mi"
-            aria-haspopup="dialog">Sobre mí</button>
-          <button type="button" class="menu-btn" data-panel="experiencia"
-            aria-haspopup="dialog">Experiencia</button>
-          <button type="button" class="menu-btn" data-panel="proyectos"
-            aria-haspopup="dialog">Proyectos</button>
-          <button type="button" class="menu-btn" data-panel="contacto"
-            aria-haspopup="dialog">Contacto</button>
-        </nav>
+        <!-- ========== FONDO + ESCENA 3D ========== -->
+        <div class="overlay"></div>
+        <div id="escena-3d" class="hero-gato-caja" role="img"
+          aria-label="Escena 3D de bloques: gata gamer frente a un escritorio, con ventanas flotantes que abren cada sección."></div>
 
-        <p class="pista" aria-hidden="true">Arrastra para rotar · haz clic en
-          las
-          ventanas flotantes</p>
+        <p class="pista" aria-hidden="true">
+          <span class="solo-mouse">Arrastra para rotar · Haz clic en las
+            ventanas con nombre</span>
+          <span class="solo-tactil">Desliza para rotar · Toca las ventanas con
+            nombre</span>
+        </p>
 
-        <!-- ========== PANELES (se abren por encima) ========== -->
+        <!-- ========== PANELES ========== -->
         <div class="panel" id="sobre-mi" role="dialog" aria-modal="true"
           aria-labelledby="t-sobre-mi" hidden>
           <div class="panel-card">
             <button type="button" class="panel-cerrar"
               aria-label="Cerrar">&times;</button>
-            <h2 id="t-sobre-mi">Sobre mí</h2>
-            <p>Soy desarrollador web junior y me gusta construir interfaces que
-              se
-              sienten vivas: 3D, animación y detalles creativos.</p>
-            <p>También trabajo con datos y automatizo análisis para que la
-              información se entienda más rápido.</p>
-            <p>[Agrega aquí de dónde eres, qué estudiaste y qué estás buscando
-              ahora.]</p>
+            <section class="panel-card-sobremi">
+              <article class="t-sobremi-article1">
+                <img src="https://i.ibb.co/pB3wvK8L/image.png" alt="t-img_mia"
+                  class="t-panel-img">
+              </article>
+              <article class="t-sobremi-article2">
+                <h4>Julián Andrés Carvajalino Quintero</h4>
+                <p class="t-profesion">Ingeniero de Sistemas</p>
+                <p class="t-perfil">
+                  Desarrollador web junior enfocado en crear soluciones
+                  digitales,
+                  mejorar aplicaciones y automatizar procesos.
+                </p>
+              </article>
+              <article class="t-sobremi-article3">
+                <h2 id="t-sobre-mi">Sobre mí</h2>
+                <p>Soy desarrollador web junior apasionado por la tecnología y
+                  la creación de experiencias digitales. Me gusta transformar
+                  ideas en proyectos funcionales, combinando diseño,
+                  programación e interactividad.</p>
+                <p>Me interesa explorar las interfaces 3D, las animaciones web y
+                  el análisis de datos, buscando siempre nuevas formas de
+                  mejorar mis habilidades y resolver problemas.</p>
+                <p>Actualmente, continúo aprendiendo y desarrollando proyectos
+                  que me permitan crecer profesionalmente, fortalecer mis
+                  conocimientos y aportar soluciones creativas.</p>
+              </article>
+            </section>
           </div>
         </div>
 
@@ -145,20 +188,21 @@
             <ul class="enlaces">
               <li><a
                   href="mailto:tucorreo@ejemplo.com">tucorreo@ejemplo.com</a></li>
-              <li><a href="#">GitHub</a></li>
-              <li><a href="#">LinkedIn</a></li>
+              <li><a href="https://github.com/TU-USUARIO" target="_blank"
+                  rel="noopener">GitHub</a></li>
+              <li><a href="https://linkedin.com/in/TU-USUARIO" target="_blank"
+                  rel="noopener">LinkedIn</a></li>
             </ul>
-            <a href="#" class="btn btn-principal">Descargar CV</a>
+            <a href="cv.pdf" download class="btn btn-primario">Descargar CV</a>
           </div>
         </div>
-      </section>
 
+      </section>
     </main>
 
-    <!-- Three.js r128 (cdnjs), luego la escena, luego tu index.js de siempre -->
+    <!-- Three.js r128 -->
     <script
       src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="escena.js"></script>
     <script src="index.js"></script>
   </body>
 </html>

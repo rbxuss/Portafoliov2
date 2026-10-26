@@ -1,6 +1,18 @@
 /* =========================================================
-   Escena 3D voxel (Three.js r128) para el hero del portafolio
-   Se dibuja dentro de <div id="escena-3d" class="hero-gato-caja">
+   ESTADO COMPARTIDO ENTRE LA ESCENA Y LOS PANELES
+   ========================================================= */
+let panelAbierto = false;   // la escena se pausa mientras haya un panel abierto
+let descubierto = false;    // true cuando la persona ya interactuó (hover, arrastre o clic)
+
+function descubrir() {
+  if (descubierto) return;
+  descubierto = true;
+  document.body.classList.add('explorado');   // retira la pista inferior
+}
+
+/* =========================================================
+   ESCENA 3D VOXEL (Three.js r128)
+   Se dibuja dentro de <div id="escena-3d">
    ========================================================= */
 (function () {
   const caja = document.getElementById('escena-3d');
@@ -15,11 +27,22 @@
   caja.appendChild(renderer.domElement);
   const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 300);
 
-  // ===== HELPER =====
+  // ===== HELPER (geometrías y materiales compartidos: menos memoria y menos trabajo para la GPU) =====
+  const geos = new Map(), mats = new Map();
+  const geo = (w, h, d) => {
+    const k = w + '_' + h + '_' + d;
+    if (!geos.has(k)) geos.set(k, new THREE.BoxGeometry(w, h, d));
+    return geos.get(k);
+  };
+  const mat = (color, basic) => {
+    const k = color + (basic ? 'b' : 's');
+    if (!mats.has(k)) mats.set(k, basic
+      ? new THREE.MeshBasicMaterial({ color })
+      : new THREE.MeshStandardMaterial({ color, roughness: .8, metalness: .05 }));
+    return mats.get(k);
+  };
   function addBlock(x, y, z, w, h, d, color, group, basic) {
-    const mat = basic ? new THREE.MeshBasicMaterial({ color })
-                      : new THREE.MeshStandardMaterial({ color, roughness: .8, metalness: .05 });
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+    const m = new THREE.Mesh(geo(w, h, d), mat(color, basic));
     m.position.set(x, y, z); m.castShadow = !basic; m.receiveShadow = true;
     (group || scene).add(m); return m;
   }
@@ -47,15 +70,35 @@
   addBlock(7.2, 4.1, -3, 1.6, 0.2, 8.2, 0x7a3a9a, desk);
   addBlock(0, 4.54, -2.2, 9.5, 0.08, 3.4, 0x5a4a7a, desk);
 
-  // ===== MONITOR =====
+  // ===== MONITOR (con barras de ecualizador y líneas de código animadas) =====
   const monitor = mkGroup();
   addBlock(0, 4.6, -5.6, 2.6, 0.2, 1.6, 0x6a5a8a, monitor);
   addBlock(0, 5.2, -5.6, 0.9, 1.2, 0.8, 0x6a5a8a, monitor);
   addBlock(0, 7.7, -5.6, 7, 4.4, 0.5, 0x5a4a7a, monitor);
   const screen = addBlock(0, 7.7, -5.3, 6.4, 3.8, 0.1, 0xffb0e0, monitor, true);
+  screen.material = new THREE.MeshBasicMaterial({ color: 0xffb0e0 });   // propio: su color cambia en cada frame
   addBlock(0, 7.6, -5.22, 4.2, 1.0, 0.05, 0x3a2a5a, monitor, true);
-  for (let i = 0; i < 7; i++) addBlock(-1.5 + i * 0.5, 7.65, -5.18, 0.3, 0.45, 0.04, 0xffb0e0, monitor, true);
+
+  const barras = [];
+  for (let i = 0; i < 7; i++) barras.push(addBlock(-1.5 + i * 0.5, 7.65, -5.18, 0.3, 0.45, 0.04, 0xffb0e0, monitor, true));
+
+  const lineas = [];
+  for (let i = 0; i < 5; i++) {
+    const w = 1.5 + Math.random() * 2.5;
+    const l = addBlock(-2.8 + w / 2, 9.3 - i * 0.28, -5.22, w, 0.14, 0.04, i % 2 ? 0x7a3a9a : 0x3a2a5a, monitor, true);
+    l.userData = { w, x0: -2.8, ph: i * 1.3 };
+    lineas.push(l);
+  }
   addBlock(0, 6.55, -5.2, 1.6, 0.12, 0.04, 0x7a3a9a, monitor, true);
+
+  function animarMonitor(t) {
+    barras.forEach((b, i) => { b.scale.y = 0.4 + Math.abs(Math.sin(t * 3 + i * 0.9)) * 1.3; });
+    lineas.forEach(l => {
+      const k = 0.2 + 0.8 * (Math.sin(t * 0.9 + l.userData.ph) * 0.5 + 0.5);
+      l.scale.x = k;
+      l.position.x = l.userData.x0 + l.userData.w * k / 2;   // el borde izquierdo queda fijo
+    });
+  }
 
   // ===== TECLADO, MOUSE, ESTAMBRE =====
   const kb = mkGroup();
@@ -99,6 +142,8 @@
     hood: 0x8a52d6, hoodDark: 0x6a3aa8, dark: 0x2a1a4a, ink: 0x1a0b2e, cyan: 0x3ff0ff
   };
   const S = [-1, 1];
+  const ojos = [];
+  const sm = x => { x = Math.min(1, Math.max(0, x)); return x * x * (3 - 2 * x); };   // suavizado 0→1
 
   // --- Piernas (sentada, colgando del asiento) ---
   S.forEach(s => {
@@ -144,12 +189,12 @@
   H(0.22, 0.45, -1.58, 0.3, 0.1, 0.05, C.dark, true);
 
   S.forEach(s => {
-    H(s * 0.85, 1.45, -1.33, 0.55, 0.7, 0.1, C.ink, true);          // ojo
-    H(s * 0.85 + 0.1, 1.65, -1.39, 0.2, 0.2, 0.05, 0xffffff, true); // brillo
-    H(s * 0.75, 1.2, -1.39, 0.2, 0.1, 0.05, C.cyan, true);          // reflejo de la pantalla
-    H(s * 1.3, 0.9, -1.33, 0.5, 0.22, 0.05, 0xff7ac0, true);        // mejilla sonrojada
-    H(s * 1.85, 0.7, -0.9, 0.35, 0.7, 0.8, C.furLight);             // pelusa de la mejilla
-    [-1, 0, 1].forEach(k => {                                       // bigotes
+    ojos.push(H(s * 0.85, 1.45, -1.33, 0.55, 0.7, 0.1, C.ink, true));  // ojo
+    H(s * 0.85 + 0.1, 1.65, -1.39, 0.2, 0.2, 0.05, 0xffffff, true);    // brillo
+    H(s * 0.75, 1.2, -1.39, 0.2, 0.1, 0.05, C.cyan, true);             // reflejo de la pantalla
+    H(s * 1.3, 0.9, -1.33, 0.5, 0.22, 0.05, 0xff7ac0, true);           // mejilla sonrojada
+    H(s * 1.85, 0.7, -0.9, 0.35, 0.7, 0.8, C.furLight);                // pelusa de la mejilla
+    [-1, 0, 1].forEach(k => {                                          // bigotes
       const w = H(s * 2.05, 0.75 + k * 0.2, -1.4, 1.1, 0.05, 0.05, 0xffe8f8, true);
       w.rotation.z = s * k * 0.15;
     });
@@ -204,7 +249,14 @@
 
   // --- Animación de la gata (se llama desde animar) ---
   function animarGata(t) {
-    head.rotation.y = Math.sin(t * 0.6) * 0.18;
+    // cada 10 s se voltea hacia la cámara unos 3 s y parpadea
+    const c = t % 10;
+    const giro = sm((c - 6) / 0.8) * (1 - sm((c - 8.6) / 0.8));
+    const haciaCamara = Math.atan2(Math.sin(Math.PI + theta), Math.cos(Math.PI + theta));
+    head.rotation.y = giro * haciaCamara + Math.sin(t * 0.6) * 0.18 * (1 - giro);
+    const guino = giro > 0.9 && (c % 1) > 0.85 ? 0.1 : 1;
+    ojos.forEach(o => { o.scale.y = guino; });
+
     head.rotation.z = Math.sin(t * 0.9 + 1) * 0.03;
     head.position.y = 7.2 + Math.sin(t * 1.6) * 0.05;
     ears.forEach((e, i) => {
@@ -220,7 +272,8 @@
     });
   }
 
-  // ===== PANELES FLOTANTES (más juntos para caber en la columna) =====
+  // ===== VENTANAS FLOTANTES =====
+  // Con "modulo" abren una sección. Sin "modulo" son decorativas: se ven más apagadas y no responden.
   const ICONS = {
     paw:  ["#.#.#", ".###.", "#####", "#####", ".###."],
     fish: ["..###..#", "#######.", "##.####.", "#######.", "..###..#"],
@@ -229,27 +282,55 @@
     face: ["#...#", "##.##", "#####", "#.#.#", "#####"],
     head: [".###.", "#...#", "#...#", "##.##"]
   };
+  const NOMBRES = { 'sobre-mi': 'Sobre mí', experiencia: 'Experiencia', proyectos: 'Proyectos', contacto: 'Contacto' };
   const panels = [];
   function makePanel(icon, x, y, z, w, h, rot, modulo) {
     const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = rot; g.userData.modulo = modulo; scene.add(g);
     addBlock(0, 0, 0, w, h, 0.5, 0x5a4a7a, g);
-    const faceMat = new THREE.MeshStandardMaterial({ color: 0xffb0e0, emissive: 0xff8ac8, emissiveIntensity: .3, roughness: .6 });
-    const face = new THREE.Mesh(new THREE.BoxGeometry(w - 0.5, h - 0.5, 0.2), faceMat);
+    const faceMat = modulo
+      ? new THREE.MeshStandardMaterial({ color: 0xffb0e0, emissive: 0xff8ac8, emissiveIntensity: .3, roughness: .6 })
+      : new THREE.MeshStandardMaterial({ color: 0x9a7cc4, emissive: 0x6a3aa8, emissiveIntensity: .12, roughness: .8 });
+    const face = new THREE.Mesh(geo(w - 0.5, h - 0.5, 0.2), faceMat);
     face.position.z = 0.2; face.receiveShadow = true; g.add(face);
-    const pat = ICONS[icon], px = (w - 1.2) / pat[0].length, ph = Math.min(px, (h - 1.2) / pat.length);
+    const pat = ICONS[icon], cell = (w - 1.2) / pat[0].length, cellH = Math.min(cell, (h - 1.2) / pat.length);
     pat.forEach((row, r) => [...row].forEach((ch, c) => {
-      if (ch === '#') addBlock(-((pat[0].length - 1) * px) / 2 + c * px, ((pat.length - 1) * ph) / 2 - r * ph, 0.4, px * .95, ph * .95, 0.2, 0x3a2a5a, g);
+      if (ch === '#') addBlock(-((pat[0].length - 1) * cell) / 2 + c * cell, ((pat.length - 1) * cellH) / 2 - r * cellH, 0.4, cell * .95, cellH * .95, 0.2, 0x3a2a5a, g);
     }));
     addBlock(w / 2 - 0.45, h / 2 - 0.28, 0.32, 0.3, 0.18, 0.1, 0x7a3a9a, g);
-    panels.push({ g, faceMat, modulo, alto: h, y0: y, ph: Math.random() * 6.28, rot0: rot });
+    panels.push({ g, faceMat, modulo, h, y0: y, ph: Math.random() * 6.28, rot0: rot });
   }
-  // Las 4 de la derecha/centro abren secciones; las 2 de la izquierda son decorativas
-  makePanel('fish',  -1,   14.2, -7,   3.8, 4.4,  0.10, 'experiencia');
-  makePanel('pad',    6.5, 13.8, -7,   5,   3.4, -0.10, 'proyectos');
+  makePanel('fish',  -1,   15.2, -7,   3.8, 4.4,  0.10, 'experiencia');
+  makePanel('pad',    6.5, 14.2, -7,   5,   3.4, -0.10, 'proyectos');
   makePanel('chat',  10,   10.5, -3,   3.6, 3.6, -0.35, 'contacto');
   makePanel('face',  10.5,  6.0,  0.5, 3.4, 4,   -0.50, 'sobre-mi');
-  makePanel('paw',   -9,   10.5, -3,   3.6, 3.6,  0.35);
-  makePanel('head', -10,    6.4,  0.5, 3.8, 3.4,  0.50);
+  makePanel('paw',   -9,   10.5, -3,   3.6, 3.6,  0.35);   // decorativa
+  makePanel('head', -10,    6.4,  0.5, 3.8, 3.4,  0.50);   // decorativa
+
+  // ===== ETIQUETAS SIEMPRE VISIBLES (también son botones: sirven con teclado y en pantallas táctiles) =====
+  const etiquetas = [];
+  panels.forEach(p => {
+    if (!p.modulo) return;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'etiqueta-ventana';
+    b.textContent = NOMBRES[p.modulo];
+    b.setAttribute('aria-label', 'Abrir ' + NOMBRES[p.modulo]);
+    b.addEventListener('click', () => abrir(p.modulo, b));
+    caja.appendChild(b);
+    etiquetas.push({ b, p });
+  });
+
+  let cw = 1, ch = 1;                    // tamaño del lienzo en px
+  const vTmp = new THREE.Vector3();
+  function ubicarEtiquetas() {
+    etiquetas.forEach(({ b, p }) => {
+      p.g.getWorldPosition(vTmp);
+      vTmp.y -= (p.h / 2) * p.g.scale.y + 0.9;      // justo debajo de la ventana
+      vTmp.project(camera);
+      b.style.visibility = vTmp.z < 1 ? '' : 'hidden';
+      b.style.transform = 'translate(' + ((vTmp.x * 0.5 + 0.5) * cw) + 'px,' + ((-vTmp.y * 0.5 + 0.5) * ch) + 'px) translate(-50%, 0)';
+    });
+  }
 
   // ===== PARTÍCULAS =====
   const sparks = [];
@@ -258,46 +339,24 @@
     s.userData = { sp: Math.random() * .5 + .2, ph: Math.random() * 6.28 }; sparks.push(s);
   }
 
-  // ===== ESTADO, ÓRBITA Y CLIC EN LAS VENTANAS =====
+  // ===== ÓRBITA + PARALLAX + CLIC/HOVER EN LAS VENTANAS =====
   const target = new THREE.Vector3(0, 7.5, -1);
   let theta = 0.45, phi = 1.0, radius = 40, rMin = 20, rMax = 60, prevFit = 0;
+  let mx = 0, my = 0, px = 0, py = 0;   // mouse normalizado y su versión suavizada
   const pts = new Map(); let pinch = 0, lx = 0, ly = 0, down = null, hover = null;
-  // estado: idle (libre) -> ida (cámara vuela a la ventana) -> abierto (panel) -> vuelta -> idle
-  let estado = 'idle', vuelo = null, guardado = null, panelAbierto = false, primeraVez = true;
   const cv = renderer.domElement;
   cv.style.touchAction = 'none'; cv.style.cursor = 'grab'; cv.tabIndex = 0;
   const clampR = r => Math.min(rMax, Math.max(rMin, r));
-  const NOMBRES = { 'sobre-mi': 'Sobre mí', experiencia: 'Experiencia', proyectos: 'Proyectos', contacto: 'Contacto' };
 
-  // Etiquetas siempre visibles bajo cada ventana clicable
-  const chips = panels.filter(p => p.modulo).map(p => {
-    const d = document.createElement('div'); d.className = 'chip-3d'; d.textContent = '▸ ' + NOMBRES[p.modulo];
-    caja.appendChild(d); return { p, d };
+  addEventListener('pointermove', e => {
+    if (e.pointerType !== 'mouse') return;
+    mx = e.clientX / innerWidth * 2 - 1;
+    my = e.clientY / innerHeight * 2 - 1;
   });
 
-  // Vuelo suave de cámara
-  const ease = x => x < .5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
-  const camPose = () => ({ theta, phi, radius, tx: target.x, ty: target.y, tz: target.z });
-  function volarA(pose, dur, fin) {
-    let dth = pose.theta - theta; dth = ((dth + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
-    vuelo = { t0: clock.getElapsedTime(), dur, de: camPose(), a: pose, dth, fin };
-  }
-  function irA(p) {
-    guardado = camPose(); estado = 'ida'; hover = null; primeraVez = false;
-    volarA({ theta: p.rot0, phi: 1.3, radius: prevFit * 0.42, tx: p.g.position.x, ty: p.y0, tz: p.g.position.z }, 0.8,
-      () => { estado = 'abierto'; if (window.abrir) window.abrir(p.modulo, cv); });
-  }
-  // Detecta cuándo se abre/cierra un panel (index.js sólo usa el atributo hidden)
-  function comprobar() {
-    panelAbierto = !!document.querySelector('.panel:not([hidden])');
-    if (panelAbierto) { primeraVez = false; if (estado === 'idle') { estado = 'abierto'; guardado = null; } }
-    else if (estado === 'abierto') {
-      if (guardado) { estado = 'vuelta'; volarA(guardado, 0.65, () => { estado = 'idle'; }); } else estado = 'idle';
-    }
-  }
-  new MutationObserver(comprobar).observe(document.body, { subtree: true, attributes: true, attributeFilter: ['hidden'] });
-
   const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+
+  // Devuelve la ventana clicable bajo el puntero (o null; las decorativas no cuentan)
   function panelBajo(e) {
     const r = cv.getBoundingClientRect();
     ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
@@ -309,35 +368,40 @@
   }
 
   cv.addEventListener('pointerdown', e => {
-    if (estado !== 'idle') return;
+    descubrir();
     pts.set(e.pointerId, e); lx = e.clientX; ly = e.clientY;
     down = { x: e.clientX, y: e.clientY }; cv.setPointerCapture(e.pointerId); cv.style.cursor = 'grabbing';
   });
   const soltar = e => {
+    // clic = soltar casi donde se presionó (si arrastró, no cuenta)
     const clic = e.type === 'pointerup' && down && pts.size === 1 && Math.hypot(e.clientX - down.x, e.clientY - down.y) < 6;
     pts.delete(e.pointerId); pinch = 0; down = null; cv.style.cursor = hover ? 'pointer' : 'grab';
-    if (clic && estado === 'idle') { const p = panelBajo(e); if (p) irA(p); }
+    if (clic) { const p = panelBajo(e); if (p) abrir(p.modulo, cv); }
   };
   cv.addEventListener('pointerup', soltar); cv.addEventListener('pointercancel', soltar);
   cv.addEventListener('pointerleave', () => { if (!pts.size) hover = null; });
   cv.addEventListener('pointermove', e => {
-    if (estado !== 'idle') return;
-    if (!pts.size && e.pointerType === 'mouse') { hover = panelBajo(e); cv.style.cursor = hover ? 'pointer' : 'grab'; return; }
+    if (!pts.size && e.pointerType === 'mouse') {            // solo pasar el mouse
+      hover = panelBajo(e); cv.style.cursor = hover ? 'pointer' : 'grab';
+      if (hover) descubrir();
+      return;
+    }
     if (!pts.has(e.pointerId)) return; pts.set(e.pointerId, e);
     if (pts.size === 2) { const [a, b] = [...pts.values()]; const d = Math.hypot(a.clientX - b.clientX, a.clientY - b.clientY); if (pinch) radius = clampR(radius * pinch / d); pinch = d; return; }
     hover = null;
     theta -= (e.clientX - lx) * 0.006; phi = Math.min(1.45, Math.max(0.35, phi - (e.clientY - ly) * 0.006));
     lx = e.clientX; ly = e.clientY;
   });
-  cv.addEventListener('wheel', e => { e.preventDefault(); if (estado === 'idle') radius = clampR(radius * (1 + e.deltaY * 0.001)); }, { passive: false });
+  cv.addEventListener('wheel', e => { e.preventDefault(); radius = clampR(radius * (1 + e.deltaY * 0.001)); }, { passive: false });
 
   // ===== AJUSTE AL TAMAÑO DE LA COLUMNA =====
   function ajustar() {
     const w = caja.clientWidth, h = caja.clientHeight; if (!w || !h) return;
+    cw = w; ch = h;
     renderer.setSize(w, h, false); camera.aspect = w / h;
-    // distancia para que quepan ancho (~26) y alto (~21) de la escena
+    // distancia para que quepan ancho (~26) y alto (~25) de la escena
     const t = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2));
-    const fit = Math.max(11.5 / t, 14 / (t * camera.aspect));
+    const fit = Math.max(12.5 / t, 13 / (t * camera.aspect));
     const ratio = prevFit ? radius / prevFit : 1; // conserva el zoom del usuario al redimensionar
     prevFit = fit; rMin = fit * 0.55; rMax = fit * 1.4; radius = clampR(fit * ratio);
     const ancha = camera.aspect > 1.2;
@@ -348,140 +412,89 @@
   ajustar();
 
   // ===== ANIMACIÓN =====
-  const clock = new THREE.Clock(), tmp = new THREE.Color(), v3 = new THREE.Vector3();
+  const clock = new THREE.Clock(), tmp = new THREE.Color();
   const reducir = matchMedia('(prefers-reduced-motion: reduce)').matches;
-
-  // Entrada: los bloques "se construyen" de abajo hacia arriba
-  // FASES: 'intro' (se presenta el texto, la escena espera oculta) -> 'escena' (el 3D es el protagonista)
-  let fase = 'intro', introT0 = 0;
-  document.body.classList.add('fase-intro');
-  const intro = []; let introListo = reducir;
-  if (!reducir) scene.traverse(o => {
-    if (o.isMesh) { o.getWorldPosition(v3); intro.push({ o, d: Math.max(0, v3.y) * 0.07 + Math.random() * 0.25 }); o.scale.setScalar(0.0001); }
-  });
-  const backOut = x => 1 + 2.70158 * Math.pow(x - 1, 3) + 1.70158 * Math.pow(x - 1, 2);
-
   function animar() {
     requestAnimationFrame(animar);
-    if (fase === 'intro') return;                    // la escena espera mientras se presenta el texto
-    if (panelAbierto && !vuelo) return;              // ahorro: pausa con el panel abierto
-    const te = clock.getElapsedTime(), t = reducir ? 0 : te;
+    if (panelAbierto) return;                                   // pausa mientras hay un panel abierto
+    const t = reducir ? 0 : clock.getElapsedTime();
 
-    if (vuelo) {                                      // vuelo de cámara
-      const k = Math.min(1, (te - vuelo.t0) / vuelo.dur), e = ease(k), d = vuelo.de, a = vuelo.a;
-      theta = d.theta + vuelo.dth * e; phi = d.phi + (a.phi - d.phi) * e; radius = d.radius + (a.radius - d.radius) * e;
-      target.set(d.tx + (a.tx - d.tx) * e, d.ty + (a.ty - d.ty) * e, d.tz + (a.tz - d.tz) * e);
-      if (k >= 1) { const f = vuelo.fin; vuelo = null; if (f) f(); }
-    }
-    if (!introListo) {
-      let fin = true;
-      intro.forEach(i => { const k = Math.min(1, Math.max(0, (te - introT0 - i.d) / 0.45)); if (k < 1) fin = false; i.o.scale.setScalar(Math.max(k === 0 ? 0 : backOut(k), 0.0001)); });
-      introListo = fin;
-    }
+    // las ventanas clicables "laten" unos segundos si nadie las ha tocado todavía
+    const ayuda = !descubierto && t > 2.6 && t < 14;
 
     panels.forEach(p => {
       p.g.position.y = p.y0 + Math.sin(t * 1.2 + p.ph) * 0.5;
       p.g.rotation.y = p.rot0 + Math.sin(t * .8 + p.ph) * 0.12;
-      const esc = p === hover ? 1.12 : 1;
+      const latido = ayuda && p.modulo ? (Math.sin(t * 4 + p.ph) * 0.5 + 0.5) : 0;
+      const esc = p === hover ? 1.12 : 1 + latido * 0.07;
       p.g.scale.setScalar(p.g.scale.x + (esc - p.g.scale.x) * 0.2);
-      p.faceMat.emissiveIntensity = 0.3 + Math.sin(t * 3 + p.ph * 2) * 0.15 + (Math.sin(t * 11 + p.ph) > 0.95 ? 0.25 : 0) + (p === hover ? 0.4 : 0);
+      if (p.modulo) {
+        p.faceMat.emissiveIntensity = 0.3 + Math.sin(t * 3 + p.ph * 2) * 0.15 + (Math.sin(t * 11 + p.ph) > 0.95 ? 0.25 : 0) + (p === hover ? 0.4 : 0) + latido * 0.35;
+      }
     });
 
-    // etiquetas pegadas a cada ventana
-    const W = caja.clientWidth, H = caja.clientHeight, visible = estado === 'idle' && !panelAbierto && introListo;
-    chips.forEach(({ p, d }) => {
-      v3.copy(p.g.position); v3.y -= p.alto / 2 + 0.9; v3.project(camera);
-      d.style.transform = `translate(${(v3.x * .5 + .5) * W}px, ${(-v3.y * .5 + .5) * H}px) translate(-50%, 0)`;
-      d.style.opacity = visible ? '1' : '0';
-      d.classList.toggle('activa', p === hover); d.classList.toggle('pulsa', primeraVez && !reducir);
-    });
-
-    animarGata(t);                                    // la gata: exactamente tu animación
+    animarGata(t);
+    animarMonitor(t);
 
     tmp.setHSL(0.88 + Math.sin(t * 0.7) * 0.05, 1, 0.8 + Math.sin(t * 1.3) * 0.05);
     screen.material.color.copy(tmp); screenLight.color.copy(tmp);
-    sparks.forEach(s => { s.position.y += Math.sin(t * s.userData.sp * 3 + s.userData.ph) * 0.008; s.rotation.y = t * s.userData.sp; });
 
-    const balanceo = (estado === 'idle' && !pts.size && !reducir) ? Math.sin(te * 0.35) * 0.06 : 0; // vaivén suave
-    const th = theta + balanceo;
-    camera.position.set(
-      target.x + radius * Math.sin(phi) * Math.sin(th),
-      target.y + radius * Math.cos(phi),
-      target.z + radius * Math.sin(phi) * Math.cos(th));
-    camera.lookAt(target);
-    renderer.render(scene, camera);
-  }
-  // Paso de la presentación a la escena: los bloques se construyen y la cámara hace una entrada en arco
-  function entrarEscena() {
-    if (fase === 'escena') return;
-    fase = 'escena'; sincronizarToggle();
-    document.querySelector('.btn-entrar')?.remove();
-    document.body.classList.remove('fase-intro'); document.body.classList.add('fase-escena');
-    introT0 = clock.getElapsedTime();
-    if (reducir) { estado = 'idle'; return; }
-    const destino = camPose();
-    theta += 0.9; radius = destino.radius * 1.3; estado = 'entrada';
-    volarA(destino, 2.2, () => { estado = 'idle'; });
-  }
-  // Volver a la presentación (clic en el logo)
-  function volverAIntro() {
-    if (fase === 'intro') return;
-    if (typeof cerrar === 'function') cerrar(false);
-    vuelo = null;
-    if (guardado) { theta = guardado.theta; phi = guardado.phi; radius = guardado.radius; target.set(guardado.tx, guardado.ty, guardado.tz); }
-    guardado = null; estado = 'idle'; panelAbierto = false; hover = null;
-    fase = 'intro'; sincronizarToggle();
-    document.body.classList.remove('fase-escena'); document.body.classList.add('fase-intro');
-    presentacionLista(false);
-  }
-  window.entrarEscena = entrarEscena; window.volverAIntro = volverAIntro;
-
-  // Interruptor de vista en el header: Presentación <-> Escena 3D
-  const header = document.querySelector('body > header');
-  let toggle = null;
-  if (header) {
-    toggle = document.createElement('div');
-    toggle.className = 'vista-toggle'; toggle.setAttribute('role', 'group'); toggle.setAttribute('aria-label', 'Cambiar de vista');
-    toggle.innerHTML = '<button type="button" data-vista="intro">Presentación</button><button type="button" data-vista="escena">Escena 3D</button>';
-    header.appendChild(toggle);
-    toggle.addEventListener('click', e => {
-      const b = e.target.closest('button'); if (!b) return;
-      if (b.dataset.vista === 'escena') entrarEscena(); else volverAIntro();
+    // partículas que suben y titilan
+    sparks.forEach(s => {
+      if (!reducir) { s.position.y += s.userData.sp * 0.02; if (s.position.y > 19) s.position.y = 0.5; }
+      s.rotation.y = t * s.userData.sp;
+      s.rotation.x = t * s.userData.sp * 0.7;
+      s.scale.setScalar(0.75 + 0.25 * Math.sin(t * 3 + s.userData.ph));
     });
-  }
-  function sincronizarToggle() {
-    if (toggle) toggle.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.vista === fase)));
-  }
-  sincronizarToggle();
 
+    // cámara viva: entrada, vaivén y parallax con el mouse
+    px += ((reducir ? 0 : mx) - px) * 0.05;
+    py += ((reducir ? 0 : my) - py) * 0.05;
+    const ease = reducir ? 1 : 1 - Math.pow(1 - Math.min(1, t / 2.6), 3);   // entrada de 2.6 s
+    const rr  = radius * (1 + (1 - ease) * 0.7);                              // arranca lejos y se acerca
+    const thA = theta + (1 - ease) * 1.2 + Math.sin(t * 0.35) * 0.10 + px * 0.18;
+    const phA = Math.min(1.45, Math.max(0.35, phi - py * 0.07 + Math.sin(t * 0.27) * 0.03));
+    camera.position.set(
+      target.x + rr * Math.sin(phA) * Math.sin(thA),
+      target.y + rr * Math.cos(phA),
+      target.z + rr * Math.sin(phA) * Math.cos(thA));
+    camera.lookAt(target);
 
+    renderer.render(scene, camera);
+    ubicarEtiquetas();                                          // después de renderizar: la cámara ya está actualizada
+  }
   animar();
 })();
 
 
 /* =========================================================
-   Paneles (Sobre mí, Experiencia, Proyectos, Contacto)
+   PANELES (Sobre mí, Experiencia, Proyectos, Contacto)
+   Se abren desde: ventanas 3D, etiquetas, menú del header y botones del hero
    ========================================================= */
 const paneles = document.querySelectorAll('.panel');
-const botones = document.querySelectorAll('.menu-btn');
 let abiertoPor = null;
 
 function abrir(id, boton) {
   cerrar(false);
   const panel = document.getElementById(id);
   if (!panel) return;
+  descubrir();
   abiertoPor = boton;
   panel.hidden = false;
+  panelAbierto = true;
   panel.querySelector('.panel-cerrar').focus();
 }
 
 function cerrar(devolverFoco = true) {
   paneles.forEach(p => { p.hidden = true; });
+  panelAbierto = false;
   if (devolverFoco && abiertoPor) abiertoPor.focus();
   abiertoPor = null;
 }
 
-botones.forEach(b => b.addEventListener('click', () => abrir(b.dataset.panel, b)));
+document.querySelectorAll('[data-abrir]').forEach(b => {
+  b.addEventListener('click', () => abrir(b.dataset.abrir, b));
+});
 
 paneles.forEach(p => {
   // Cerrar con la X o al hacer clic fuera de la tarjeta
@@ -495,26 +508,28 @@ document.addEventListener('keydown', e => {
 });
 
 
+/* =========================================================
+   NOMBRE: efecto "máquina de escribir"
+   ========================================================= */
 (function () {
-  const h1s = document.querySelectorAll('.hero-text h1');
+  const lns = document.querySelectorAll('.hero-text .ln');
   const cursor = document.querySelector('.hero-text .cursor');
-  if (!h1s.length || !cursor) { setTimeout(() => presentacionLista(false), 300); return; }
-  if (matchMedia('(prefers-reduced-motion: reduce)').matches) { setTimeout(() => presentacionLista(false), 300); return; }
- 
-  // guarda cada nombre completo y vacía el texto (el lector de pantalla lo lee por aria-label)
-  const lineas = [...h1s].map(h => {
-    const nodo = h.firstChild;
+  if (!lns.length || !cursor) return;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+  // guarda cada línea completa y vacía el texto (el lector de pantalla usa el aria-label del h1)
+  const lineas = [...lns].map(el => {
+    const nodo = el.firstChild;
     const completo = nodo.textContent;
-    h.setAttribute('aria-label', completo);
     nodo.textContent = '';
-    return { h, nodo, completo };
+    return { el, nodo, completo };
   });
- 
+
   let i = 0;
   function escribir() {
-    if (i >= lineas.length) { setTimeout(() => presentacionLista(false), 400); return; }
-    const { h, nodo, completo } = lineas[i];
-    h.appendChild(cursor);                 // el cursor "salta" a la línea que se escribe
+    if (i >= lineas.length) return;
+    const { el, nodo, completo } = lineas[i];
+    el.appendChild(cursor);              // el cursor "salta" a la línea que se escribe
     let k = 0;
     const id = setInterval(() => {
       nodo.textContent = completo.slice(0, ++k);
@@ -525,32 +540,6 @@ document.addEventListener('keydown', e => {
       }
     }, 90);
   }
- 
+
   setTimeout(escribir, 600);
 })();
-
-
-/* =========================================================
-   Presentación -> escena 3D
-   Al terminar de escribirse el nombre aparece "Explorar mi mundo"
-   (si nadie lo pulsa, entra solo a los 5,5 s). El logo vuelve a la presentación.
-   ========================================================= */
-function presentacionLista(auto) {
-  if (document.body.classList.contains('fase-escena')) return;   // ya estás en la escena
-  const cont = document.querySelector('.hero-text');
-  if (!cont || !window.entrarEscena) { if (window.entrarEscena) entrarEscena(); return; }
-  if (cont.querySelector('.btn-entrar')) return;
-  const b = document.createElement('button');
-  b.type = 'button'; b.className = 'btn-entrar';
-  b.innerHTML = 'Explorar mi mundo <span aria-hidden="true">▸</span>';
-  cont.appendChild(b);
-  requestAnimationFrame(() => requestAnimationFrame(() => b.classList.add('visible')));
-  let id = null;
-  const ir = () => { clearTimeout(id); b.remove(); entrarEscena(); };
-  b.addEventListener('click', ir);
-  if (auto) id = setTimeout(ir, 5500);
-}
-
-document.querySelector('.logo')?.addEventListener('click', e => {
-  e.preventDefault(); if (window.volverAIntro) volverAIntro();
-});
